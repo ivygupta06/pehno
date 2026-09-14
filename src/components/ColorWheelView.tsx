@@ -454,7 +454,8 @@ export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
       if (!shoes) {
         shoes = activeWardrobe.find((i) => i.category === 'shoes');
       }
-      if (!bag) {
+      // Bag is optional — only include bag if 35% probability or specific occasion (not forced for every fit)
+      if (!bag && Math.random() < 0.35) {
         bag = activeWardrobe.find((i) => i.category === 'bags');
       }
       if (!outerwear && Math.random() > 0.5) {
@@ -465,6 +466,19 @@ export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
       const harmony = evaluateColorHarmony(
         items.map((i) => ({ hex: i.colorHex || '#FFFFFF', name: i.colorName || 'Neutral' }))
       );
+
+      // Generate 2 recommendations to complete the look
+      const segmentRecs = COLOR_SHOPPING_RECOMMENDATIONS[segment.name] || [];
+      const spinExternalSuggestions = segmentRecs.slice(0, 2).map((rec, rIdx) => ({
+        id: `spin-ext-${segment.name.toLowerCase()}-${rIdx}-${Date.now()}`,
+        category: (rec.category.toLowerCase() as any) || 'accessories',
+        name: rec.name,
+        color: rec.colorName,
+        colorHex: rec.colorHex,
+        reasoning: rec.reasoning,
+        searchQuery: rec.searchQuery,
+        vibe: 'chic' as StyleAesthetic,
+      }));
 
       const newOutfit: Outfit = {
         id: `spin-outfit-${Date.now()}`,
@@ -480,6 +494,7 @@ export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
         outerwear,
         shoes,
         bag,
+        externalSuggestions: spinExternalSuggestions,
         stylingNotes: [
           `Curated around your real ${segment.name} item (${heroGarment.name}) in your closet!`,
           harmony.description,
@@ -771,6 +786,58 @@ export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {/* Complete the Look (2 Recommended Shopping Additions) */}
+          {generatedOutfit.externalSuggestions && generatedOutfit.externalSuggestions.length > 0 && (
+            <div className="pt-4 border-t border-pastel-sand/50 space-y-3">
+              <div>
+                <h5 className="text-xs font-bold uppercase tracking-wider text-pastel-charcoal flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Complete the Look (2 Recommended Additions)</span>
+                </h5>
+                <p className="text-[11px] text-pastel-muted mt-0.5">
+                  Curated shopping recommendations to complete your {selectedSegment.name} outfit:
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {generatedOutfit.externalSuggestions.map((sugg) => (
+                  <div
+                    key={sugg.id}
+                    className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-50/60 to-pastel-cream-100 border border-pastel-sand/70 flex items-start justify-between gap-3 shadow-xs"
+                  >
+                    <div className="space-y-1 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full border border-black/10 flex-shrink-0"
+                          style={{ backgroundColor: sugg.colorHex }}
+                        />
+                        <span className="text-xs font-bold text-pastel-charcoal">
+                          {sugg.name}
+                        </span>
+                        <span className="text-[9px] uppercase px-1.5 py-0.5 rounded-md bg-white text-pastel-muted font-semibold">
+                          {sugg.category}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-pastel-muted leading-snug">
+                        {sugg.reasoning}
+                      </p>
+                    </div>
+
+                    <a
+                      href={`https://www.google.com/search?tbm=shop&q=${encodeURIComponent(sugg.searchQuery || sugg.name)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white hover:bg-pastel-cream-200 border border-pastel-sand text-[10px] font-bold text-pastel-charcoal whitespace-nowrap shadow-xs hover:shadow-soft transition-all flex-shrink-0"
+                    >
+                      <span>Inspo / Shop</span>
+                      <ExternalLink className="w-3 h-3 text-pastel-muted" />
+                    </a>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

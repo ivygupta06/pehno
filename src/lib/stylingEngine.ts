@@ -481,7 +481,8 @@ export function generateOccasionOutfits(wardrobe: GarmentItem[], occasion: Occas
       shoe = dressHeels.length > 0 ? dressHeels[idx % dressHeels.length] : undefined;
     }
 
-    const bag = bags.length > 0 
+    // Bag is optional — do NOT force bag on every fit unless office or 40% probability
+    const bag = bags.length > 0 && (occasion === 'office' || (idx % 2 === 0 && Math.random() < 0.5))
       ? bags.find(b => b.occasions.includes(occasion)) || bags[idx % bags.length]
       : undefined;
 
@@ -492,9 +493,9 @@ export function generateOccasionOutfits(wardrobe: GarmentItem[], occasion: Occas
     const itemsToEvaluate = [top, bottom, dress, selectedOuterwear, shoe, bag, accessory];
     const { score, harmonyType, reasons } = calculateCompatibilityScore(itemsToEvaluate, occasion);
 
-    // Pick 1-2 complementary external suggestions (Keep AS IT IS per user request)
+    // Always guarantee EXACTLY 2 complementary external recommendations
     const externalSuggestions: ExternalSuggestion[] = EXTERNAL_SUGGESTION_POOL
-      .filter((_, i) => i % 3 === idx % 3 || (i + 1) % 3 === idx % 3)
+      .filter((_, i) => (i + idx) % 2 === 0)
       .slice(0, 2);
 
     // If styling a dress and no matching heels are in closet, suggest buying options for heels!
@@ -632,6 +633,31 @@ export function generateOccasionOutfits(wardrobe: GarmentItem[], occasion: Occas
       conciseNotes.push(`Anchored with ${pieceName} for polished, photogenic contrast.`);
     }
 
+    // Guarantee EXACTLY 2 external recommendations per outfit
+    const finalExternal = externalSuggestions.length >= 2 ? externalSuggestions.slice(0, 2) : [
+      ...externalSuggestions,
+      {
+        id: `ext-sugg-hoops-${idx}-${Date.now()}`,
+        category: 'accessories' as const,
+        name: 'Gold Chunky Hoop Earrings',
+        color: 'Polished Gold',
+        colorHex: '#D4AF37',
+        reasoning: 'Warm metallic shimmer brings instant intentional polish to the neckline.',
+        searchQuery: 'gold chunky hoop earrings 18k',
+        vibe: formula.vibe || 'chic',
+      },
+      {
+        id: `ext-sugg-mules-${idx}-${Date.now()}`,
+        category: 'shoes' as const,
+        name: 'Nude Kitten Heel Mules',
+        color: 'Warm Nude',
+        colorHex: '#E7D7C9',
+        reasoning: 'Lengthens leg line without overwhelming the drape of the outfit.',
+        searchQuery: 'nude kitten heel mules',
+        vibe: formula.vibe || 'chic',
+      },
+    ].slice(0, 2);
+
     // Guarantee STRICT MAX 3 POINTS:
     const finalNotes = conciseNotes.slice(0, 3);
 
@@ -646,7 +672,7 @@ export function generateOccasionOutfits(wardrobe: GarmentItem[], occasion: Occas
       shoes: shoe,
       bag,
       accessory,
-      externalSuggestions: externalSuggestions.slice(0, 3),
+      externalSuggestions: finalExternal,
       occasion,
       compatibilityScore: score,
       colorHarmonyType: harmonyType,
