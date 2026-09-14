@@ -41,8 +41,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => setActiveTab('closet')}
             className="flex items-center gap-3 cursor-pointer group"
           >
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-pastel-sage to-pastel-lavender flex items-center justify-center shadow-soft text-pastel-charcoal transform transition-transform group-hover:scale-105">
-              <Sparkles className="w-6 h-6 text-pastel-charcoal" />
+            <div className="w-11 h-11 rounded-2xl overflow-hidden bg-gradient-to-tr from-pastel-sage to-pastel-lavender flex items-center justify-center shadow-soft transform transition-transform group-hover:scale-105 border border-pastel-sand/50">
+              <img src="/logo.jpg" alt="Pehno Logo" className="w-full h-full object-cover" />
             </div>
             <div>
               <div className="flex items-baseline gap-2">

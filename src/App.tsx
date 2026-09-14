@@ -171,13 +171,7 @@ export const App: React.FC = () => {
     saveFavorites([], currentUser?.id || null);
   };
 
-  const handleSyncWardrobe = (syncedWardrobe: GarmentItem[], syncedFavorites: Outfit[]) => {
-    updateWardrobe(syncedWardrobe);
-    setFavorites(syncedFavorites);
-    const userId = currentUser?.id || null;
-    saveWardrobe(syncedWardrobe, userId);
-    saveFavorites(syncedFavorites, userId);
-  };
+
 
   const handleSignOut = () => {
     authSignOut();
@@ -303,9 +297,6 @@ export const App: React.FC = () => {
         }}
         onResetWardrobe={handleResetWardrobe}
         onClearAll={handleClearAll}
-        wardrobe={wardrobe}
-        favorites={favorites}
-        onSyncWardrobe={handleSyncWardrobe}
       />
 
       {/* Authentication Modal */}
