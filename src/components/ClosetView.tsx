@@ -231,7 +231,7 @@ export const ClosetView: React.FC<ClosetViewProps> = ({
               Your Digital Wardrobe
             </h1>
             <p className="text-xs sm:text-sm text-pastel-muted mt-2 leading-relaxed">
-              Like your stylish bestie who always finalizes the fit—color-curated, season-ready, and AI-styled in seconds.
+              Pehno is like your bestie who finalizes your fit ✨
             </p>
           </div>
 
