@@ -3,7 +3,7 @@
  * Run once after setting MONGODB_URI in .env:
  *   node backend/migrate.js
  */
-import 'dotenv/config.js';
+import dotenv from 'dotenv'; dotenv.config();
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
