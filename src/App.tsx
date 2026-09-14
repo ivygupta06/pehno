@@ -182,7 +182,7 @@ export const App: React.FC = () => {
   const geminiConnection = hasGeminiKey ? 'server-managed' : '';
 
   return (
-    <div className="min-h-screen bg-pastel-cream-100 flex flex-col selection:bg-pastel-lavender selection:text-pastel-charcoal">
+    <div className="min-h-screen bg-pastel-cream-200 flex flex-col selection:bg-pastel-lavender selection:text-pastel-charcoal">
       {/* Navigation Bar */}
       <Navbar
         activeTab={activeTab}
@@ -198,7 +198,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Tab Views */}
-      <main className="flex-1 pb-16">
+      <main className="flex-1">
         {activeTab === 'closet' && (
           <ClosetView
             wardrobe={wardrobe}

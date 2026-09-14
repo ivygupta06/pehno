@@ -15,27 +15,18 @@ export interface ColorStoryOption {
 const COLOR_STORIES: ColorStoryOption[] = [
   {
     id: 'cream',
-    name: 'Cream & Beige',
+    name: 'Cream & Neutrals',
     hex: '#F7F3E9',
-    bgTint: 'rgba(247, 243, 233, 0.7)',
+    bgTint: 'rgba(238, 230, 218, 0.95)',
     borderHex: '#E5D5C5',
-    matchKeywords: ['cream', 'beige', 'oat', 'linen', 'ecru', 'tan', 'sand', 'camel', 'khaki', 'taupe', 'nude', 'biscuit'],
-    matchHexes: ['#f7f3e9', '#f4efea', '#f5ebe0', '#fff8dc', '#d4c5b9', '#c7b299', '#c49a6c'],
-  },
-  {
-    id: 'white',
-    name: 'Crisp White',
-    hex: '#FAF9F6',
-    bgTint: 'rgba(255, 255, 255, 0.88)',
-    borderHex: '#D6D3D1',
-    matchKeywords: ['white', 'ivory', 'off-white', 'warm white', 'optic', 'chalk', 'pearl', 'snow'],
-    matchHexes: ['#ffffff', '#fbfbfb', '#f5f5f5', '#faf9f6', '#fffdf0'],
+    matchKeywords: ['cream', 'beige', 'oat', 'linen', 'ecru', 'tan', 'sand', 'camel', 'khaki', 'taupe', 'nude', 'biscuit', 'white', 'ivory', 'off-white', 'warm white', 'optic', 'chalk', 'pearl', 'snow'],
+    matchHexes: ['#f7f3e9', '#f4efea', '#f5ebe0', '#fff8dc', '#d4c5b9', '#c7b299', '#c49a6c', '#ffffff', '#fbfbfb', '#f5f5f5', '#faf9f6', '#fffdf0'],
   },
   {
     id: 'blue',
     name: 'Soft Blue & Denim',
     hex: '#7EA6E0',
-    bgTint: 'rgba(239, 246, 255, 0.85)',
+    bgTint: 'rgba(224, 237, 254, 0.95)',
     borderHex: '#93C5FD',
     matchKeywords: ['blue', 'denim', 'navy', 'sky', 'baby blue', 'cobalt', 'indigo', 'azure', 'cyan', 'slate', 'ocean', 'teal', 'aqua'],
     matchHexes: ['#bae6fd', '#7ea6e0', '#1e40af', '#93c5fd', '#3b82f6', '#1d4ed8'],
@@ -44,7 +35,7 @@ const COLOR_STORIES: ColorStoryOption[] = [
     id: 'coral',
     name: 'Coral & Red',
     hex: '#D67474',
-    bgTint: 'rgba(254, 242, 242, 0.85)',
+    bgTint: 'rgba(254, 226, 226, 0.95)',
     borderHex: '#FCA5A5',
     matchKeywords: ['red', 'coral', 'crimson', 'burgundy', 'wine', 'cherry', 'ruby', 'maroon', 'rose', 'terracotta', 'rust', 'brick'],
     matchHexes: ['#d67474', '#f87171', '#9f1239', '#fca5a5', '#dc2626', '#b91c1c', '#75222d', '#57141b'],
@@ -53,7 +44,7 @@ const COLOR_STORIES: ColorStoryOption[] = [
     id: 'sage',
     name: 'Sage & Green',
     hex: '#88C9A1',
-    bgTint: 'rgba(240, 253, 244, 0.85)',
+    bgTint: 'rgba(220, 245, 228, 0.95)',
     borderHex: '#86EFAC',
     matchKeywords: ['green', 'sage', 'olive', 'emerald', 'matcha', 'mint', 'forest', 'pistachio', 'khaki green', 'lime', 'jade'],
     matchHexes: ['#d5e5da', '#88c9a1', '#86efac', '#065f46', '#16a34a', '#15803d'],
@@ -62,7 +53,7 @@ const COLOR_STORIES: ColorStoryOption[] = [
     id: 'lavender',
     name: 'Lavender & Purple',
     hex: '#9A8ECB',
-    bgTint: 'rgba(250, 245, 255, 0.85)',
+    bgTint: 'rgba(243, 232, 255, 0.95)',
     borderHex: '#C084FC',
     matchKeywords: ['purple', 'lavender', 'violet', 'lilac', 'plum', 'mauve', 'magenta', 'grape', 'amethyst', 'periwinkle'],
     matchHexes: ['#e9d5ff', '#9a8ecb', '#c084fc', '#6b21a8', '#9333ea', '#7e22ce'],
@@ -71,7 +62,7 @@ const COLOR_STORIES: ColorStoryOption[] = [
     id: 'dark',
     name: 'Slate & Black',
     hex: '#363749',
-    bgTint: 'rgba(241, 245, 249, 0.85)',
+    bgTint: 'rgba(226, 232, 240, 0.95)',
     borderHex: '#475569',
     matchKeywords: ['black', 'charcoal', 'slate', 'dark', 'obsidian', 'midnight', 'espresso', 'graphite', 'ebony', 'onyx'],
     matchHexes: ['#000000', '#18181b', '#363749', '#111827', '#1e293b', '#0f172a', '#334155', '#1a1a1a', '#121212'],
@@ -80,7 +71,7 @@ const COLOR_STORIES: ColorStoryOption[] = [
     id: 'yellow',
     name: 'Sunlit Yellow & Gold',
     hex: '#FACC15',
-    bgTint: 'rgba(254, 252, 232, 0.95)',
+    bgTint: 'rgba(254, 249, 195, 0.95)',
     borderHex: '#FDE047',
     matchKeywords: ['yellow', 'gold', 'amber', 'butter', 'mustard', 'lemon', 'honey', 'canary', 'maize', 'marigold', 'blonde', 'sunflower'],
     matchHexes: ['#f3f0c4', '#f5e89f', '#fdfd96', '#fef08a', '#facc15', '#fde047', '#eab308', '#f59e0b', '#d4af37', '#c8b17a'],
@@ -89,14 +80,14 @@ const COLOR_STORIES: ColorStoryOption[] = [
     id: 'pink',
     name: 'Blush & Pink',
     hex: '#F472B6',
-    bgTint: 'rgba(253, 242, 248, 0.85)',
+    bgTint: 'rgba(252, 231, 243, 0.95)',
     borderHex: '#FBCFE8',
     matchKeywords: ['pink', 'blush', 'rose', 'fuchsia', 'bubblegum', 'salmon', 'peach', 'barbie'],
     matchHexes: ['#fce7f3', '#f472b6', '#fbcfe8', '#9d174d', '#ec4899', '#db2777', '#e3b7c5'],
   },
 ];
 
-const COLOR_STORY_MATCH_ORDER = ['white', 'yellow', 'coral', 'blue', 'sage', 'lavender', 'pink', 'dark', 'cream'];
+const COLOR_STORY_MATCH_ORDER = ['yellow', 'coral', 'blue', 'sage', 'lavender', 'pink', 'dark', 'cream'];
 
 const hasColorWord = (value: string, word: string) =>
   new RegExp(`(^|[^a-z])${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=$|[^a-z])`, 'i').test(value);
@@ -222,11 +213,12 @@ export const ClosetView: React.FC<ClosetViewProps> = ({
 
   return (
     <div 
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn transition-colors duration-500 rounded-3xl"
+      className="w-full min-h-full transition-colors duration-500 pb-16"
       style={{
         backgroundColor: activeColorStory ? activeColorStory.bgTint : undefined,
       }}
     >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
       
       {/* Top Banner / Closet Aesthetic Overview */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-pastel-butter-light via-pastel-cream-100 to-pastel-sage-light p-6 sm:p-8 border border-pastel-sand/60 shadow-soft">
@@ -623,6 +615,7 @@ export const ClosetView: React.FC<ClosetViewProps> = ({
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };
