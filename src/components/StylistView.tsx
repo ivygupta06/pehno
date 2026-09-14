@@ -327,10 +327,16 @@ export const StylistView: React.FC<StylistViewProps> = ({
         <div className="space-y-8">
           {generatedOutfits.map((outfit, index) => {
             const isSaved = isOutfitSaved(outfit.id);
+
+            // Inviolable fashion rule: A dress is a 1-piece outfit. Never render with top or bottom!
+            const dressItem = outfit.dress || (outfit.top?.category === 'dresses' ? outfit.top : (outfit.bottom?.category === 'dresses' ? outfit.bottom : undefined));
+            const topItem = dressItem ? undefined : outfit.top;
+            const bottomItem = dressItem ? undefined : outfit.bottom;
+
             const outfitGarments = [
-              outfit.top,
-              outfit.bottom,
-              outfit.dress,
+              topItem,
+              bottomItem,
+              dressItem,
               outfit.outerwear,
               outfit.shoes,
               outfit.bag,

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "act-1789362852437-y9xt",
+    "timestamp": 1789362852437,
+    "type": "WARDROBE_SAVE",
+    "email": "default",
+    "userName": "",
+    "browser": "Mozilla/5.0",
+    "details": "Saved 13 garments"
+  },
+  {
+    "id": "act-1789362617617-akgu",
+    "timestamp": 1789362617617,
+    "type": "WARDROBE_SAVE",
+    "email": "default",
+    "userName": "",
+    "browser": "Mozilla/5.0",
+    "details": "Saved 8 garments"
+  },
+  {
+    "id": "act-1789331056581-ol6g",
+    "timestamp": 1789331056581,
+    "type": "WARDROBE_SAVE",
+    "email": "default",
+    "userName": "",
+    "browser": "Mozilla/5.0",
+    "details": "Saved 8 garments"
+  },
+  {
+    "id": "act-1789331056530-kclv",
+    "timestamp": 1789331056530,
+    "type": "WARDROBE_SAVE",
+    "email": "default",
+    "userName": "",
+    "browser": "Mozilla/5.0",
+    "details": "Saved 8 garments"
+  },
+  {
+    "id": "act-1",
+    "timestamp": 1789315600000,
+    "type": "REGISTER",
+    "email": "ivygupta06@gmail.com",
+    "userName": "Ivy",
+    "browser": "Chrome",
+    "details": "Account registered with romantic style persona"
+  },
+  {
+    "id": "act-2",
+    "timestamp": 1789315610000,
+    "type": "LOGIN",
+    "email": "ivygupta06@gmail.com",
+    "userName": "Ivy",
+    "browser": "Chrome",
+    "details": "Logged in successfully from Chrome (Mac)"
+  }
+]

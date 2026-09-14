@@ -1,0 +1,20 @@
+[
+  {
+    "id": "act-1",
+    "timestamp": 1789315600000,
+    "type": "REGISTER",
+    "email": "ivygupta06@gmail.com",
+    "userName": "Ivy",
+    "browser": "Chrome",
+    "details": "Account registered with romantic style persona"
+  },
+  {
+    "id": "act-2",
+    "timestamp": 1789315610000,
+    "type": "LOGIN",
+    "email": "ivygupta06@gmail.com",
+    "userName": "Ivy",
+    "browser": "Chrome",
+    "details": "Logged in successfully from Chrome (Mac)"
+  }
+]

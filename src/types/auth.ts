@@ -13,6 +13,8 @@ export interface User {
   avatarColor: string;
   persona: StylePersona;
   createdAt: number;
+  lastLoginAt?: number;
+  role?: 'creator' | 'admin' | 'user';
 }
 
 export interface AuthSession {

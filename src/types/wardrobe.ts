@@ -9,13 +9,13 @@ export type GarmentCategory =
 
 export type GarmentSubcategory = 
   // Tops
-  | 't-shirt' | 'crop-top' | 'blouse' | 'button-down' | 'knit-sweater' | 'tank-top' | 'cardigan' | 'hoodie'
+  | 't-shirt' | 'crop-top' | 'blouse' | 'button-down' | 'knit-sweater' | 'tank-top' | 'tube-top' | 'corset' | 'cardigan' | 'hoodie'
   // Bottoms
   | 'jeans' | 'wide-leg-trousers' | 'tailored-pants' | 'cargo-pants' | 'shorts' | 'mini-skirt' | 'midi-skirt' | 'linen-pants'
   // Outerwear
-  | 'blazer' | 'trench-coat' | 'denim-jacket' | 'leather-jacket' | 'puffer' | 'duster'
+  | 'blazer' | 'trench-coat' | 'denim-jacket' | 'leather-jacket' | 'puffer' | 'duster' | 'shrug' | 'bolero'
   // Dresses
-  | 'slip-dress' | 'sundress' | 'midi-dress' | 'shirt-dress' | 'jumpsuit'
+  | 'slip-dress' | 'sundress' | 'midi-dress' | 'mini-dress' | 'maxi-dress' | 'wrap-dress' | 'bodycon' | 'shirt-dress' | 'jumpsuit'
   // Shoes
   | 'sneakers' | 'loafers' | 'mules' | 'heels' | 'sandals' | 'boots' | 'flats'
   // Bags

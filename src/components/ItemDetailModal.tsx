@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { X, Sparkles, Heart, Trash2, Edit3, Check } from 'lucide-react';
 import { GarmentCategory, GarmentItem } from '../types/wardrobe';
-import { evaluateColorHarmony } from '../lib/colorTheory';
+import { getBestMatchingPartners } from '../lib/stylingEngine';
 
 interface ItemDetailModalProps {
   item: GarmentItem | null;
@@ -11,6 +11,8 @@ interface ItemDetailModalProps {
   onDelete: (itemId: string) => void;
   onStyleThis: (garment: GarmentItem) => void;
   onUpdateGarment?: (updated: GarmentItem) => void;
+  onSelectGarment?: (garment: GarmentItem) => void;
+  onAddGarments?: (newPieces: GarmentItem[]) => void;
 }
 
 export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
@@ -21,6 +23,8 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
   onDelete,
   onStyleThis,
   onUpdateGarment,
+  onSelectGarment,
+  onAddGarments,
 }) => {
   if (!item) return null;
 
@@ -48,24 +52,9 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
     setIsEditing(false);
   };
 
-  // Compute best matching partners from current wardrobe
+  // Compute best matching partners using fashion compatibility rules
   const bestMatches = useMemo(() => {
-    return wardrobe
-      .filter(other => other.id !== item.id && other.category !== item.category)
-      .map(other => {
-        const harmony = evaluateColorHarmony([
-          { hex: item.colorHex, name: item.colorName },
-          { hex: other.colorHex, name: other.colorName },
-        ]);
-        return {
-          item: other,
-          score: harmony.score,
-          harmonyType: harmony.harmonyType,
-          description: harmony.description,
-        };
-      })
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 4);
+    return getBestMatchingPartners(item, wardrobe, 4);
   }, [item, wardrobe]);
 
   return (
@@ -170,7 +159,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                       <option value="dresses">👗 Dresses</option>
                       <option value="tops">👚 Tops</option>
                       <option value="bottoms">👖 Bottoms</option>
-                      <option value="outerwear">🧥 Outerwear</option>
+                      <option value="outerwear">🧥 Outerwear & Shrugs</option>
                       <option value="shoes">👟 Shoes</option>
                       <option value="bags">👜 Bags</option>
                       <option value="accessories">🕶️ Accessories</option>
@@ -232,24 +221,70 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
 
             {/* Best Matching Wardrobe Partners */}
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-pastel-charcoal flex items-center gap-1 mb-2.5">
-                <Sparkles className="w-3 h-3 text-amber-500" />
-                <span>Pairs Best With (In Your Closet)</span>
-              </span>
-              <div className="grid grid-cols-2 gap-2">
-                {bestMatches.map((m, idx) => (
-                  <div
-                    key={idx}
-                    className="p-2 rounded-xl bg-white border border-pastel-sand flex items-center gap-2 shadow-xs"
-                  >
-                    <img src={m.item.imageUrl} alt={m.item.name} className="w-8 h-8 rounded-lg object-cover" />
-                    <div className="overflow-hidden">
-                      <p className="text-[10px] font-bold text-pastel-charcoal truncate">{m.item.name}</p>
-                      <p className="text-[9px] text-pastel-sage-dark font-semibold">{m.score}% Harmony</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between gap-1 mb-2.5">
+                <span className="text-xs font-bold uppercase tracking-wider text-pastel-charcoal flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-amber-500" />
+                  <span>Pairs Best With</span>
+                </span>
+                <span className="text-[10px] text-pastel-muted font-medium">
+                  {item.category === 'dresses'
+                    ? '✨ Shrugs, Outerwear & Accessories'
+                    : item.category === 'tops'
+                    ? '✨ Bottoms, Layers & Accessories'
+                    : '✨ Harmonized Pairings'}
+                </span>
               </div>
+
+              {bestMatches.length === 0 ? (
+                <div className="p-4 rounded-2xl bg-white/60 border border-dashed border-pastel-sand text-center text-xs text-pastel-muted">
+                  No matching companion pieces found in closet yet.
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {bestMatches.map((m, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        if (m.isSuggestion) {
+                          if (onAddGarments) {
+                            onAddGarments([m.item]);
+                          }
+                        }
+                        if (onSelectGarment) {
+                          onSelectGarment(m.item);
+                        }
+                      }}
+                      className="p-2 rounded-xl bg-white border border-pastel-sand flex items-center gap-2 shadow-xs cursor-pointer hover:border-pastel-sage-dark hover:shadow-soft hover:scale-[1.02] transition-all group relative"
+                      title={m.isSuggestion ? `Add "${m.item.name}" to closet` : `View "${m.item.name}"`}
+                    >
+                      <div className="relative w-8 h-8 flex-shrink-0">
+                        <img src={m.item.imageUrl} alt={m.item.name} className="w-8 h-8 rounded-lg object-cover" />
+                        {m.isSuggestion && (
+                          <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pastel-sage-dark opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-pastel-sage-dark"></span>
+                          </span>
+                        )}
+                      </div>
+                      <div className="overflow-hidden flex-1 min-w-0">
+                        <p className="text-[10px] font-bold text-pastel-charcoal truncate group-hover:text-pastel-sage-dark transition-colors">
+                          {m.item.name}
+                        </p>
+                        <div className="flex items-center justify-between gap-1">
+                          <p className="text-[9px] text-pastel-sage-dark font-semibold whitespace-nowrap">
+                            {m.score}% Harmony
+                          </p>
+                          {m.isSuggestion && (
+                            <span className="text-[8px] font-bold text-pastel-charcoal/70 bg-pastel-cream-200 px-1 py-0.2 rounded border border-pastel-sand/50">
+                              + Closet
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

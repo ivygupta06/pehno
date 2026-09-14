@@ -1,0 +1,22 @@
+[
+  {
+    "id": "user-default-ivy",
+    "name": "Ivy Gupta",
+    "email": "ivy@pehno.style",
+    "passwordHash": "password123",
+    "avatarColor": "#D5E5DA",
+    "persona": "romantic",
+    "createdAt": 1788630000000,
+    "lastLoginAt": 1789315800000
+  },
+  {
+    "id": "user-ivy-gmail",
+    "name": "ivygupta06@gmail.com",
+    "email": "ivygupta06@gmail.com",
+    "passwordHash": "password123",
+    "avatarColor": "#FEF08A",
+    "persona": "romantic",
+    "createdAt": 1789315600000,
+    "lastLoginAt": 1789315600000
+  }
+]

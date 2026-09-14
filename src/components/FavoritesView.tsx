@@ -137,10 +137,15 @@ export const FavoritesView: React.FC<FavoritesViewProps> = ({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredFavorites.map(outfit => {
+            // Inviolable fashion rule: A dress is a 1-piece outfit. Never render with top or bottom!
+            const dressItem = outfit.dress || (outfit.top?.category === 'dresses' ? outfit.top : (outfit.bottom?.category === 'dresses' ? outfit.bottom : undefined));
+            const topItem = dressItem ? undefined : outfit.top;
+            const bottomItem = dressItem ? undefined : outfit.bottom;
+
             const garments = [
-              outfit.top,
-              outfit.bottom,
-              outfit.dress,
+              topItem,
+              bottomItem,
+              dressItem,
               outfit.outerwear,
               outfit.shoes,
               outfit.bag,

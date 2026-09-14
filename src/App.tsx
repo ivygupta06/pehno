@@ -9,9 +9,10 @@ import {
   loadSettings,
   saveSettings,
   resetWardrobe,
+  syncWardrobeWithServer,
   UserSettings,
 } from './lib/storage';
-import { getCurrentUser, signOut as authSignOut } from './lib/auth';
+import { getCurrentUser, signOut as authSignOut, isCreatorUser } from './lib/auth';
 import { Navbar } from './components/Navbar';
 import { ClosetView } from './components/ClosetView';
 import { StylistView } from './components/StylistView';
@@ -22,6 +23,7 @@ import { ItemDetailModal } from './components/ItemDetailModal';
 import { SettingsModal } from './components/SettingsModal';
 import { AuthModal } from './components/AuthModal';
 import { DuplicatesModal } from './components/DuplicatesModal';
+import { BackendModal } from './components/BackendModal';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'closet' | 'stylist' | 'studio' | 'favorites'>('closet');
@@ -34,6 +36,7 @@ export const App: React.FC = () => {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [duplicatesOpen, setDuplicatesOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [backendOpen, setBackendOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [itemDetail, setItemDetail] = useState<GarmentItem | null>(null);
   const [garmentToStyle, setGarmentToStyle] = useState<GarmentItem | null>(null);
@@ -53,6 +56,14 @@ export const App: React.FC = () => {
     const loadedF = loadFavorites(userId);
     setWardrobe(loadedW);
     setFavorites(loadedF);
+
+    // Sync from local central server database
+    syncWardrobeWithServer(userId).then(serverData => {
+      if (serverData && serverData.wardrobe && serverData.wardrobe.length > 0) {
+        setWardrobe(serverData.wardrobe);
+        if (serverData.favorites) setFavorites(serverData.favorites);
+      }
+    });
   }, [currentUser]);
 
   // Update wardrobe helper
@@ -159,6 +170,14 @@ export const App: React.FC = () => {
     saveFavorites([], currentUser?.id || null);
   };
 
+  const handleSyncWardrobe = (syncedWardrobe: GarmentItem[], syncedFavorites: Outfit[]) => {
+    updateWardrobe(syncedWardrobe);
+    setFavorites(syncedFavorites);
+    const userId = currentUser?.id || null;
+    saveWardrobe(syncedWardrobe, userId);
+    saveFavorites(syncedFavorites, userId);
+  };
+
   const handleSignOut = () => {
     authSignOut();
     setCurrentUser(null);
@@ -175,6 +194,7 @@ export const App: React.FC = () => {
         closetCount={wardrobe.length}
         favoritesCount={favorites.length}
         onOpenSettings={() => setSettingsOpen(true)}
+        onOpenBackend={() => setBackendOpen(true)}
         currentUser={currentUser}
         onOpenAuth={() => setAuthOpen(true)}
         onSignOut={handleSignOut}
@@ -257,6 +277,8 @@ export const App: React.FC = () => {
         onDelete={handleDeleteGarment}
         onStyleThis={handleSelectGarmentToStyle}
         onUpdateGarment={handleUpdateGarment}
+        onSelectGarment={(garment) => setItemDetail(garment)}
+        onAddGarments={handleAddGarments}
       />
 
       {/* Settings Modal */}
@@ -270,6 +292,9 @@ export const App: React.FC = () => {
         }}
         onResetWardrobe={handleResetWardrobe}
         onClearAll={handleClearAll}
+        wardrobe={wardrobe}
+        favorites={favorites}
+        onSyncWardrobe={handleSyncWardrobe}
       />
 
       {/* Authentication Modal */}
@@ -278,6 +303,14 @@ export const App: React.FC = () => {
         onClose={() => setAuthOpen(false)}
         onSuccess={(user) => setCurrentUser(user)}
       />
+
+      {/* Backend & Database Control Modal (Only for Website Creator) */}
+      {isCreatorUser(currentUser) && (
+        <BackendModal
+          isOpen={backendOpen}
+          onClose={() => setBackendOpen(false)}
+        />
+      )}
     </div>
   );
 };

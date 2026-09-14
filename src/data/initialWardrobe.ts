@@ -4,7 +4,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   // TOPS
   {
     id: 'item-top-1',
-    name: 'Crisp White Poplin Shirt',
+    name: 'White Poplin Shirt',
     category: 'tops',
     subcategory: 'button-down',
     colorName: 'Crisp White',
@@ -23,7 +23,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   },
   {
     id: 'item-top-2',
-    name: 'Baby Sky Blue Knit Tank',
+    name: 'Blue Knit Tank',
     category: 'tops',
     subcategory: 'tank-top',
     colorName: 'Baby Sky Blue',
@@ -41,7 +41,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   },
   {
     id: 'item-top-3',
-    name: 'Matcha Sage Linen Blouse',
+    name: 'Green Linen Blouse',
     category: 'tops',
     subcategory: 'blouse',
     colorName: 'Matcha Sage Green',
@@ -59,7 +59,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   },
   {
     id: 'item-top-4',
-    name: 'Buttercream Cable Cardigan',
+    name: 'Yellow Cable Cardigan',
     category: 'tops',
     subcategory: 'cardigan',
     colorName: 'Buttercream Yellow',
@@ -78,7 +78,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   },
   {
     id: 'item-top-5',
-    name: 'Oatmeal Boxy Everyday Tee',
+    name: 'Cream Boxy Tee',
     category: 'tops',
     subcategory: 't-shirt',
     colorName: 'Oat Cream',
@@ -98,7 +98,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   // BOTTOMS
   {
     id: 'item-bottom-1',
-    name: 'Vintage Blue Wide-Leg Jeans',
+    name: 'Blue Straight Jeans',
     category: 'bottoms',
     subcategory: 'jeans',
     colorName: 'Vintage Indigo Denim',
@@ -117,7 +117,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   },
   {
     id: 'item-bottom-2',
-    name: 'Tailored Pleated Cream Trousers',
+    name: 'Cream Pleated Trousers',
     category: 'bottoms',
     subcategory: 'tailored-pants',
     colorName: 'Oat Cream',
@@ -136,7 +136,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   },
   {
     id: 'item-bottom-3',
-    name: 'Sage Pleated Flowy Midi Skirt',
+    name: 'Green Pleated Skirt',
     category: 'bottoms',
     subcategory: 'midi-skirt',
     colorName: 'Matcha Sage Green',
@@ -154,7 +154,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   },
   {
     id: 'item-bottom-4',
-    name: 'Heather Charcoal Pleated Tennis Skirt',
+    name: 'Grey Tennis Skirt',
     category: 'bottoms',
     subcategory: 'mini-skirt',
     colorName: 'Slate Grey',
@@ -174,7 +174,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   // OUTERWEAR
   {
     id: 'item-outer-1',
-    name: 'Oatmeal Wool-Blend Structured Blazer',
+    name: 'Cream Structured Blazer',
     category: 'outerwear',
     subcategory: 'blazer',
     colorName: 'Oat Cream',
@@ -193,7 +193,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   },
   {
     id: 'item-outer-2',
-    name: 'Light-Wash Oversized Denim Jacket',
+    name: 'Blue Denim Jacket',
     category: 'outerwear',
     subcategory: 'denim-jacket',
     colorName: 'Baby Sky Blue',
@@ -209,11 +209,30 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
     createdAt: Date.now() - 50000,
     tags: ['denim-jacket', 'oversized', 'layer'],
   },
+  {
+    id: 'item-outer-3',
+    name: 'White Ribbed Shrug',
+    category: 'outerwear',
+    subcategory: 'shrug',
+    colorName: 'Crisp White',
+    colorHex: '#FAF9F6',
+    colorTone: 'neutral',
+    pattern: 'ribbed',
+    material: 'Soft Ribbed Knit',
+    fit: 'cropped',
+    aesthetics: ['chic', 'romantic', 'minimalist'],
+    seasons: ['spring', 'summer', 'fall', 'all-season'],
+    occasions: ['brunch', 'date', 'casual', 'party', 'class'],
+    imageUrl: 'https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=600&auto=format&fit=crop&q=80',
+    createdAt: Date.now() - 48000,
+    tags: ['shrug', 'cropped', 'layer', 'bolero', 'knitwear'],
+    isFavorite: true,
+  },
 
   // DRESSES
   {
     id: 'item-dress-1',
-    name: 'Pastel Lavender Silk Slip Dress',
+    name: 'Purple Slip Dress',
     category: 'dresses',
     subcategory: 'slip-dress',
     colorName: 'Lavender Mist',
@@ -234,7 +253,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   // SHOES
   {
     id: 'item-shoe-1',
-    name: 'Retro White & Oat Court Sneakers',
+    name: 'White Court Sneakers',
     category: 'shoes',
     subcategory: 'sneakers',
     colorName: 'Crisp White',
@@ -253,7 +272,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   },
   {
     id: 'item-shoe-2',
-    name: 'Chunky Lug-Sole Penny Loafers',
+    name: 'Black Penny Loafers',
     category: 'shoes',
     subcategory: 'loafers',
     colorName: 'Deep Charcoal',
@@ -271,7 +290,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   },
   {
     id: 'item-shoe-3',
-    name: 'Strappy Buttercup Kitten Mules',
+    name: 'Yellow Kitten Mules',
     category: 'shoes',
     subcategory: 'mules',
     colorName: 'Buttercream Yellow',
@@ -291,7 +310,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   // BAGS
   {
     id: 'item-bag-1',
-    name: 'Woven Raffia & Canvas Bag',
+    name: 'Tan Woven Bag',
     category: 'bags',
     subcategory: 'woven-bag',
     colorName: 'Oat Cream',
@@ -309,7 +328,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   },
   {
     id: 'item-bag-2',
-    name: 'Cream Butter Leather Baguette Bag',
+    name: 'Cream Baguette Bag',
     category: 'bags',
     subcategory: 'shoulder-bag',
     colorName: 'Oat Cream',
@@ -328,7 +347,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   },
   {
     id: 'item-bag-3',
-    name: 'Sage Everyday Canvas Tote',
+    name: 'Green Canvas Tote',
     category: 'bags',
     subcategory: 'tote-bag',
     colorName: 'Matcha Sage Green',
@@ -348,7 +367,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   // ACCESSORIES
   {
     id: 'item-acc-1',
-    name: 'Amber Tortoiseshell Retro Sunglasses',
+    name: 'Brown Retro Sunglasses',
     category: 'accessories',
     subcategory: 'sunglasses',
     colorName: 'Warm Terracotta',
@@ -367,7 +386,7 @@ export const INITIAL_WARDROBE: GarmentItem[] = [
   },
   {
     id: 'item-acc-2',
-    name: 'Chunky Gold Huggie Hoops',
+    name: 'Gold Huggie Hoops',
     category: 'accessories',
     subcategory: 'earrings',
     colorName: 'Buttercream Yellow',

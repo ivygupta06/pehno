@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Upload, Sparkles, Check, RefreshCw, Trash2, Key, ExternalLink, AlertTriangle, ArrowRightLeft } from 'lucide-react';
 import { GarmentCategory, GarmentItem } from '../types/wardrobe';
 import { analyzeImageLocally, analyzeImageWithGemini, compressAndResizeImage, RawDetectedGarment } from '../lib/visionEngine';
+import { formatGarmentName } from '../lib/colorTheory';
 import { validateGeminiApiKey } from '../lib/geminiStylist';
 import { checkGarmentDuplicate, DuplicateMatch } from '../lib/duplicateDetector';
 
@@ -121,14 +122,28 @@ export const UploadModal: React.FC<UploadModalProps> = ({
       let garmentsFound: RawDetectedGarment[] = [];
       let summaryText = '';
 
-      if (keyToUse && keyToUse.trim().length > 15 && imgSrc.startsWith('data:image')) {
-        const geminiResult = await analyzeImageWithGemini(imgSrc, keyToUse, selectedMode);
-        garmentsFound = geminiResult.garments;
+      let effectiveImgSrc = imgSrc;
+      if (!effectiveImgSrc.startsWith('data:image')) {
+        try {
+          const resized = await compressAndResizeImage(imgSrc, 800);
+          effectiveImgSrc = resized.dataUrl;
+        } catch (e) {}
+      }
+
+      if (keyToUse && keyToUse.trim().length > 15 && effectiveImgSrc.startsWith('data:image')) {
+        const geminiResult = await analyzeImageWithGemini(effectiveImgSrc, keyToUse, selectedMode);
+        garmentsFound = geminiResult.garments.map(g => ({
+          ...g,
+          name: formatGarmentName(g.name, g.colorName, g.category, g.subcategory),
+        }));
         summaryText = geminiResult.summary;
       } else {
         await new Promise(r => setTimeout(r, 600));
-        const localResult = await analyzeImageLocally(imgSrc, selectedMode);
-        garmentsFound = localResult.garments;
+        const localResult = await analyzeImageLocally(effectiveImgSrc, selectedMode);
+        garmentsFound = localResult.garments.map(g => ({
+          ...g,
+          name: formatGarmentName(g.name, g.colorName, g.category, g.subcategory),
+        }));
         summaryText = localResult.summary;
       }
 
@@ -149,13 +164,17 @@ export const UploadModal: React.FC<UploadModalProps> = ({
     } catch (err: any) {
       console.warn('AI analysis fallback triggered:', err.message);
       const fallbackResult = await analyzeImageLocally(imgSrc, selectedMode);
-      setDetectedGarments(fallbackResult.garments);
+      const cleanedFallback = fallbackResult.garments.map(g => ({
+        ...g,
+        name: formatGarmentName(g.name, g.colorName, g.category, g.subcategory),
+      }));
+      setDetectedGarments(cleanedFallback);
       setAnalysisSummary(`${fallbackResult.summary} (Local Fallback: ${err.message})`);
 
-      if (wardrobe && wardrobe.length > 0 && fallbackResult.garments.length > 0) {
+      if (wardrobe && wardrobe.length > 0 && cleanedFallback.length > 0) {
         const matches: Record<number, DuplicateMatch> = {};
-        for (let i = 0; i < fallbackResult.garments.length; i++) {
-          const match = await checkGarmentDuplicate(fallbackResult.garments[i], wardrobe);
+        for (let i = 0; i < cleanedFallback.length; i++) {
+          const match = await checkGarmentDuplicate(cleanedFallback[i], wardrobe);
           if (match) {
             matches[i] = match;
           }
@@ -224,7 +243,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
 
     const newGarments: GarmentItem[] = detectedGarments.map((g, idx) => ({
       id: `garment-${Date.now()}-${idx}`,
-      name: g.name || 'Wardrobe Garment',
+      name: formatGarmentName(g.name || 'Garment', g.colorName, g.category, g.subcategory),
       category: g.category,
       subcategory: g.subcategory,
       colorName: g.colorName,
@@ -564,6 +583,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                         >
                           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                             <div className="flex items-center gap-3 w-full sm:w-auto flex-1">
+                              <img
+                                src={item.imageUrl || imagePreview || ''}
+                                alt={`${item.name} crop`}
+                                className="w-12 h-12 rounded-xl object-contain bg-pastel-cream-100 border border-pastel-sand flex-shrink-0"
+                                title="This cropped image will be saved for this item"
+                              />
                               {/* Color Dot swatch */}
                               <div
                                 className="w-9 h-9 rounded-xl shadow-inner border border-black/10 flex-shrink-0"

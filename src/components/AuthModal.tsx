@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, LogIn, UserPlus, Lock, Mail, User as UserIcon } from 'lucide-react';
+import { X, Sparkles, LogIn, UserPlus, Lock, Mail, User as UserIcon, RefreshCw } from 'lucide-react';
 import { User, StylePersona } from '../types/auth';
 import { signIn, signUp } from '../lib/auth';
 
@@ -24,42 +24,57 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const [password, setPassword] = useState('');
   const [persona, setPersona] = useState<StylePersona>('romantic');
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsLoading(true);
+
+    const cleanName = name.trim();
+    const cleanEmail = email.trim();
+    const cleanPassword = password.trim();
 
     try {
       if (tab === 'signup') {
-        if (!name.trim()) throw new Error('Please enter your name.');
-        if (!email.trim()) throw new Error('Please enter your email.');
-        if (password.length < 4) throw new Error('Password must be at least 4 characters.');
-        const user = signUp(name, email, password, persona);
+        if (!cleanName) throw new Error('Please enter your name.');
+        if (!cleanEmail) throw new Error('Please enter your email.');
+        if (cleanPassword.length < 4) throw new Error('Password must be at least 4 characters.');
+        const user = await signUp(cleanName, cleanEmail, cleanPassword, persona);
         onSuccess(user);
         onClose();
       } else {
-        if (!email.trim() || !password) throw new Error('Please enter both email and password.');
-        const user = signIn(email, password);
+        if (!cleanEmail || !cleanPassword) throw new Error('Please enter both email and password.');
+        const user = await signIn(cleanEmail, cleanPassword);
         onSuccess(user);
         onClose();
       }
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleQuickDemoLogin = () => {
+  const handleQuickDemoLogin = async () => {
+    setError(null);
+    setIsLoading(true);
     try {
-      const user = signIn('ivy@pehno.style', 'password123');
+      const user = await signIn('demo@pehno.style', 'password123');
       onSuccess(user);
       onClose();
     } catch (e) {
-      // If default user wasn't registered yet, sign up as Ivy
-      const user = signUp('Ivy Gupta', 'ivy@pehno.style', 'password123', 'romantic');
-      onSuccess(user);
-      onClose();
+      try {
+        const user = await signUp('Demo User', 'demo@pehno.style', 'password123', 'romantic');
+        onSuccess(user);
+        onClose();
+      } catch (err: any) {
+        setError(err.message || 'Demo login failed.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -115,8 +130,31 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
           {error && (
-            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-medium animate-shake">
-              {error}
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium space-y-1.5 animate-shake">
+              <p>{error}</p>
+              {error.includes('already exists') && (
+                <button
+                  type="button"
+                  onClick={() => { setTab('signin'); setError(null); }}
+                  className="text-[11px] font-bold text-pastel-sage-dark hover:underline flex items-center gap-1 mt-1"
+                >
+                  <span>Already registered? Click here to Sign In →</span>
+                </button>
+              )}
+              {error.includes('No account found') && (
+                <button
+                  type="button"
+                  onClick={() => { setTab('signup'); setError(null); }}
+                  className="text-[11px] font-bold text-pastel-sage-dark hover:underline flex items-center gap-1 mt-1"
+                >
+                  <span>New user? Click here to Create an Account →</span>
+                </button>
+              )}
+              {error.includes('password') && (
+                <p className="text-[10px] text-rose-500 font-normal">
+                  Demo hint: Default demo password is <code className="bg-rose-100 px-1 py-0.5 rounded font-mono font-bold">password123</code>
+                </p>
+              )}
             </div>
           )}
 
@@ -129,7 +167,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 <UserIcon className="w-4 h-4 text-pastel-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="e.g. Ivy Gupta"
+                  placeholder="e.g. Your Name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-pastel-sand text-xs text-pastel-charcoal focus:outline-none focus:border-pastel-sage-medium"
@@ -146,7 +184,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               <Mail className="w-4 h-4 text-pastel-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="email"
-                placeholder="ivy@pehno.style"
+                placeholder="username@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-pastel-sand text-xs text-pastel-charcoal focus:outline-none focus:border-pastel-sage-medium"
@@ -201,10 +239,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
           <button
             type="submit"
-            className="w-full py-3 rounded-2xl bg-pastel-sage-dark text-white font-bold text-xs shadow-soft hover:shadow-soft-lg hover:scale-101 active:scale-98 transition-all flex items-center justify-center gap-2 mt-2"
+            disabled={isLoading}
+            className="w-full py-3 rounded-2xl bg-pastel-sage-dark text-white font-bold text-xs shadow-soft hover:shadow-soft-lg hover:scale-101 active:scale-98 transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-60"
           >
-            {tab === 'signin' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-            <span>{tab === 'signin' ? 'Sign In to Wardrobe' : 'Complete Registration'}</span>
+            {isLoading ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Connecting to Server...</span>
+              </>
+            ) : (
+              <>
+                {tab === 'signin' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                <span>{tab === 'signin' ? 'Sign In to Wardrobe' : 'Complete Registration'}</span>
+              </>
+            )}
           </button>
         </form>
 
@@ -216,7 +264,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             className="text-xs font-semibold text-pastel-sage-dark hover:underline flex items-center justify-center gap-1.5 mx-auto"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>Quick Demo: Sign In as Ivy Gupta (Demo Account)</span>
+            <span>Quick Demo: Sign In as demo@pehno.style</span>
           </button>
         </div>
       </div>
