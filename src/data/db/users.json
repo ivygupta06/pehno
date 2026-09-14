@@ -17,7 +17,7 @@
     "avatarColor": "#FEF08A",
     "persona": "romantic",
     "createdAt": 1789315600000,
-    "lastLoginAt": 1789388567416
+    "lastLoginAt": 1789402216688
   },
   {
     "id": "931f26f0-73b1-413b-a21b-3ba3b3856f8e",
@@ -40,5 +40,16 @@
     "role": "user",
     "createdAt": 1789367184897,
     "lastLoginAt": 1789367184897
+  },
+  {
+    "id": "2df63105-dcd7-42d8-9af5-a66db6816a4c",
+    "name": "Yuvi",
+    "email": "yuvi@gmail.com",
+    "passwordHash": "scrypt$0e77631ae307a6723f5b5ec79c0fd2d2$6b605a6157412298513d740dcc09d79258c38d378b811c64b7244a253be6faf73f5c911a2f725a9368d0d56a6a6c58082050e7d759f367ad92fc47913fce3dae",
+    "avatarColor": "#BAE6FD",
+    "persona": "minimalist",
+    "role": "user",
+    "createdAt": 1789401489968,
+    "lastLoginAt": 1789401489968
   }
 ]

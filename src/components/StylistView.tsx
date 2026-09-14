@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Heart, RefreshCw, ExternalLink, Key, AlertCircle } from 'lucide-react';
+import { Sparkles, Heart, RefreshCw, ExternalLink, Key, AlertCircle, Check } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { GarmentItem, Outfit, Occasion } from '../types/wardrobe';
 import { generateOccasionOutfits, generateItemOutfits } from '../lib/stylingEngine';
 import { generateOutfitsWithGemini, styleItemWithGemini } from '../lib/geminiStylist';
+import { getUserStyleProfile, logWornItem, UserStyleProfile } from '../lib/storage';
 
 interface StylistViewProps {
   wardrobe: GarmentItem[];
@@ -41,8 +42,15 @@ export const StylistView: React.FC<StylistViewProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationSource, setGenerationSource] = useState<'gemini' | 'local'>('local');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<UserStyleProfile | null>(null);
+  const [wornNotice, setWornNotice] = useState<string | null>(null);
 
   const hasApiKey = Boolean(geminiApiKey && geminiApiKey.trim().length > 15);
+
+  // Fetch RAG user style profile on mount
+  useEffect(() => {
+    getUserStyleProfile().then(p => setUserProfile(p));
+  }, []);
 
   // Sync when preselectedItem updates
   useEffect(() => {
@@ -58,27 +66,29 @@ export const StylistView: React.FC<StylistViewProps> = ({
     setIsGenerating(true);
     setErrorMessage(null);
 
+    const profile = userProfile || await getUserStyleProfile();
+
     try {
       if (hasApiKey) {
-        // Real Gemini 1.5 Flash Call!
+        // Real Gemini 1.5 Flash Call with RAG Style Profile injection
         if (activeMode === 'occasion') {
-          const geminiFits = await generateOutfitsWithGemini(wardrobe, selectedOccasion, geminiApiKey!);
+          const geminiFits = await generateOutfitsWithGemini(wardrobe, selectedOccasion, geminiApiKey!, profile);
           setGeneratedOutfits(geminiFits);
           setGenerationSource('gemini');
         } else if (selectedGarment) {
-          const geminiFits = await styleItemWithGemini(selectedGarment, wardrobe, geminiApiKey!);
+          const geminiFits = await styleItemWithGemini(selectedGarment, wardrobe, geminiApiKey!, profile);
           setGeneratedOutfits(geminiFits);
           setGenerationSource('gemini');
         }
       } else {
-        // Built-in Color Theory Engine with a soft delay for delightful styling animation
-        await new Promise(r => setTimeout(r, 600));
+        // Built-in Color Theory Engine with dynamic style profile biasing
+        await new Promise(r => setTimeout(r, 500));
         if (activeMode === 'occasion') {
-          const fits = generateOccasionOutfits(wardrobe, selectedOccasion, 3);
+          const fits = generateOccasionOutfits(wardrobe, selectedOccasion, 3, profile);
           setGeneratedOutfits(fits);
           setGenerationSource('local');
         } else if (selectedGarment) {
-          const fits = generateItemOutfits(selectedGarment, wardrobe);
+          const fits = generateItemOutfits(selectedGarment, wardrobe, profile);
           setGeneratedOutfits(fits);
           setGenerationSource('local');
         }
@@ -86,12 +96,12 @@ export const StylistView: React.FC<StylistViewProps> = ({
     } catch (err: any) {
       console.warn('Gemini generation error, falling back to local engine:', err.message);
       setErrorMessage(`Gemini message: ${err.message}. Switched to local color theory engine.`);
-      
+
       // Fallback to local
       if (activeMode === 'occasion') {
-        setGeneratedOutfits(generateOccasionOutfits(wardrobe, selectedOccasion, 3));
+        setGeneratedOutfits(generateOccasionOutfits(wardrobe, selectedOccasion, 3, profile));
       } else if (selectedGarment) {
-        setGeneratedOutfits(generateItemOutfits(selectedGarment, wardrobe));
+        setGeneratedOutfits(generateItemOutfits(selectedGarment, wardrobe, profile));
       }
       setGenerationSource('local');
     } finally {
@@ -103,6 +113,33 @@ export const StylistView: React.FC<StylistViewProps> = ({
   useEffect(() => {
     generateFits();
   }, [activeMode, selectedOccasion, selectedGarment]);
+
+  const handleLogWorn = (outfit: Outfit) => {
+    const primaryItem = outfit.dress || outfit.top || outfit.bottom || outfit.outerwear || outfit.shoes;
+    logWornItem({
+      userId: 'default',
+      outfitTitle: outfit.title,
+      category: primaryItem?.category || 'outfit',
+      styleTags: [outfit.vibe, ...(primaryItem?.aesthetics || [])],
+      fit: primaryItem?.fit || '',
+      colorTone: primaryItem?.colorTone || '',
+      occasion: selectedOccasion,
+    });
+
+    setWornNotice(`Logged "${outfit.title}" to your style history!`);
+    setTimeout(() => setWornNotice(null), 3500);
+
+    getUserStyleProfile().then(p => setUserProfile(p));
+
+    try {
+      confetti({
+        particleCount: 40,
+        spread: 50,
+        origin: { y: 0.8 },
+        colors: ['#A7F3D0', '#6EE7B7', '#34D399'],
+      });
+    } catch (e) {}
+  };
 
   const handleSaveFavorite = (outfit: Outfit) => {
     onSaveOutfitToFavorites(outfit);
@@ -309,6 +346,59 @@ export const StylistView: React.FC<StylistViewProps> = ({
         </div>
       )}
 
+      {/* Worn history notification banner */}
+      {wornNotice && (
+        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between shadow-soft animate-fade-in">
+          <div className="flex items-center gap-2">
+            <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <span className="font-semibold">{wornNotice}</span>
+          </div>
+          <span className="text-[10px] text-emerald-700 font-bold bg-white/80 px-2 py-0.5 rounded-full border border-emerald-200">
+            Style Profile Updated
+          </span>
+        </div>
+      )}
+
+      {/* RAG Personalized Style Profile Banner */}
+      {userProfile && (
+        <div className="p-4 rounded-3xl bg-gradient-to-r from-pastel-sage/30 via-pastel-lavender/30 to-pastel-cream-200 border border-pastel-sage/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-soft">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-pastel-sage-dark shadow-soft font-bold text-lg flex-shrink-0">
+              🎯
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-pastel-charcoal">
+                  Personalized Style Identity (RAG Biased)
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-pastel-sage-dark text-white font-bold">
+                  {userProfile.totalWornCount} Worn Fits Logged
+                </span>
+              </div>
+              <p className="text-xs text-pastel-muted mt-0.5">
+                Top Aesthetics:{' '}
+                <strong className="text-pastel-charcoal capitalize">
+                  {userProfile.frequentStyles.length > 0 ? userProfile.frequentStyles.join(' • ') : 'Streetwear • Romantic • Minimalist'}
+                </strong>
+                {userProfile.preferredFits.length > 0 && (
+                  <>
+                    {' '}
+                    | Preferred Fits:{' '}
+                    <strong className="text-pastel-charcoal capitalize">
+                      {userProfile.preferredFits.join(' • ')}
+                    </strong>
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="text-[11px] font-semibold text-pastel-sage-dark bg-white px-3 py-1.5 rounded-full border border-pastel-sage/30 shadow-xs flex-shrink-0">
+            ✨ Outfit recommendations biased to your worn history
+          </div>
+        </div>
+      )}
+
       {/* Loading Skeleton during generation */}
       {isGenerating ? (
         <div className="text-center py-20 bg-white/70 rounded-3xl border border-pastel-sand p-8 space-y-4 animate-pulse">
@@ -317,10 +407,10 @@ export const StylistView: React.FC<StylistViewProps> = ({
           </div>
           <div>
             <h3 className="font-serif text-2xl font-bold text-pastel-charcoal">
-              Analyzing Colors, Silhouettes & Accessories...
+              Analyzing Colors, Silhouettes & Personal Style History...
             </h3>
             <p className="text-xs text-pastel-muted max-w-md mx-auto mt-1">
-              Matching your closet pieces for {selectedOccasion.toUpperCase()} using color harmony rules and proportional balance.
+              Matching your closet pieces for {selectedOccasion.toUpperCase()} using RAG style preferences and color harmony rules.
             </p>
           </div>
         </div>
@@ -372,14 +462,23 @@ export const StylistView: React.FC<StylistViewProps> = ({
                     </p>
                   </div>
 
-                  {/* Compatibility Score & Save */}
-                  <div className="flex items-center gap-3">
+                  {/* Compatibility Score, Wore This & Save */}
+                  <div className="flex items-center gap-2.5 flex-wrap">
                     <div className="px-4 py-2 rounded-2xl bg-pastel-cream-100 border border-pastel-sand flex flex-col items-center">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-pastel-muted">Match Score</span>
                       <span className="font-serif text-xl font-bold text-pastel-sage-dark">
                         {outfit.compatibilityScore}%
                       </span>
                     </div>
+
+                    <button
+                      onClick={() => handleLogWorn(outfit)}
+                      className="flex items-center gap-1.5 px-4 py-3 rounded-2xl font-bold text-xs bg-pastel-sage/50 text-pastel-sage-dark border border-pastel-sage-medium hover:bg-pastel-sage-medium/40 hover:scale-102 transition-all shadow-soft"
+                      title="Log this outfit to your worn history so Pehno learns your style preference!"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>Wore This Today</span>
+                    </button>
 
                     <button
                       onClick={() => handleSaveFavorite(outfit)}

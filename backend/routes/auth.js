@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { isMongoConnected } from '../db.js';
 import UserModel from '../models/User.js';
 import ActivityModel from '../models/Activity.js';
+import WornLogModel from '../models/WornLog.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +17,7 @@ const dbDir = fs.existsSync(path.resolve(__dirname, '../../src/data/db'))
   : path.resolve(__dirname, '../data');
 const usersPath = path.join(dbDir, 'users.json');
 const activityPath = path.join(dbDir, 'activity.json');
+const wornLogsPath = path.join(dbDir, 'worn_logs.json');
 
 const router = express.Router();
 
@@ -254,6 +256,88 @@ router.post('/activity/clear', async (req, res) => {
     }
     writeJSON(activityPath, []);
     res.json({ success: true, message: 'Activity log cleared.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ── POST /api/user/worn-log ────────────────────────────────────────────────
+router.post('/worn-log', async (req, res) => {
+  try {
+    const { userId, garmentId, outfitTitle, category, styleTags, fit, colorTone, occasion } = req.body;
+    if (!userId) return res.status(400).json({ success: false, error: 'User ID is required' });
+
+    const entry = {
+      id: 'worn-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+      userId,
+      garmentId: garmentId || '',
+      outfitTitle: outfitTitle || 'Worn Outfit',
+      category: category || '',
+      styleTags: Array.isArray(styleTags) ? styleTags : [],
+      fit: fit || '',
+      colorTone: colorTone || '',
+      occasion: occasion || '',
+      timestamp: Date.now(),
+    };
+
+    if (isMongoConnected()) {
+      await WornLogModel.create(entry);
+    } else {
+      const logs = readJSON(wornLogsPath, []);
+      logs.unshift(entry);
+      writeJSON(wornLogsPath, logs.slice(0, 500));
+    }
+
+    res.json({ success: true, log: entry });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ── GET /api/user/style-profile ─────────────────────────────────────────────
+router.get('/style-profile', async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ success: false, error: 'User ID is required' });
+
+    let logs = [];
+    if (isMongoConnected()) {
+      logs = await WornLogModel.find({ userId }).sort({ timestamp: -1 }).limit(100).lean();
+    } else {
+      const allLogs = readJSON(wornLogsPath, []);
+      logs = allLogs.filter(l => l.userId === userId).slice(0, 100);
+    }
+
+    // Compute frequencies
+    const styleFreq = {};
+    const fitFreq = {};
+    const toneFreq = {};
+
+    logs.forEach(log => {
+      if (Array.isArray(log.styleTags)) {
+        log.styleTags.forEach(tag => {
+          if (tag) styleFreq[tag.toLowerCase()] = (styleFreq[tag.toLowerCase()] || 0) + 1;
+        });
+      }
+      if (log.fit) fitFreq[log.fit.toLowerCase()] = (fitFreq[log.fit.toLowerCase()] || 0) + 1;
+      if (log.colorTone) toneFreq[log.colorTone.toLowerCase()] = (toneFreq[log.colorTone.toLowerCase()] || 0) + 1;
+    });
+
+    const getTop = (obj, limit = 3) =>
+      Object.entries(obj)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(([key]) => key);
+
+    const profile = {
+      frequentStyles: getTop(styleFreq, 4),
+      preferredFits: getTop(fitFreq, 3),
+      favoriteTones: getTop(toneFreq, 3),
+      recentWorn: logs.slice(0, 10),
+      totalWornCount: logs.length,
+    };
+
+    res.json({ success: true, profile });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

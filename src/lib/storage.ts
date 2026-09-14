@@ -5,6 +5,7 @@ import { apiUrl } from './api';
 
 const WARDROBE_KEY_PREFIX = 'pehno_wardrobe_items_';
 const FAVORITES_KEY_PREFIX = 'pehno_favorite_outfits_';
+const WORN_LOGS_KEY_PREFIX = 'pehno_worn_logs_';
 const SETTINGS_KEY = 'pehno_user_settings_v1';
 
 export interface UserSettings {
@@ -13,12 +14,37 @@ export interface UserSettings {
   defaultOccasion?: string;
 }
 
+export interface WornLog {
+  id: string;
+  userId: string;
+  garmentId?: string;
+  outfitTitle?: string;
+  category?: string;
+  styleTags?: string[];
+  fit?: string;
+  colorTone?: string;
+  occasion?: string;
+  timestamp: number;
+}
+
+export interface UserStyleProfile {
+  frequentStyles: string[];
+  preferredFits: string[];
+  favoriteTones: string[];
+  recentWorn: WornLog[];
+  totalWornCount: number;
+}
+
 export function getWardrobeStorageKey(userId?: string | null): string {
   return userId ? `${WARDROBE_KEY_PREFIX}${userId}` : 'pehno_wardrobe_items_v1';
 }
 
 export function getFavoritesStorageKey(userId?: string | null): string {
   return userId ? `${FAVORITES_KEY_PREFIX}${userId}` : 'pehno_favorite_outfits_v1';
+}
+
+export function getWornLogsStorageKey(userId?: string | null): string {
+  return userId ? `${WORN_LOGS_KEY_PREFIX}${userId}` : 'pehno_worn_logs_v1';
 }
 
 /**
@@ -284,4 +310,89 @@ export async function pullFromSharedServer(): Promise<{
   } catch (e: any) {
     return { success: false, exists: false, error: e.message };
   }
+}
+
+export function loadWornLogs(userId?: string | null): WornLog[] {
+  try {
+    const key = getWornLogsStorageKey(userId);
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    console.error('Error loading worn logs from localStorage', e);
+    return [];
+  }
+}
+
+export function logWornItem(
+  entry: Omit<WornLog, 'id' | 'timestamp'>,
+  userId?: string | null
+): WornLog {
+  const newLog: WornLog = {
+    ...entry,
+    id: 'worn-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    userId: entry.userId || userId || 'default',
+    timestamp: Date.now(),
+  };
+
+  try {
+    const key = getWornLogsStorageKey(userId);
+    const existing = loadWornLogs(userId);
+    existing.unshift(newLog);
+    localStorage.setItem(key, JSON.stringify(existing.slice(0, 200)));
+
+    // Background sync to backend
+    fetch(apiUrl('/api/user/worn-log'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newLog),
+    }).catch(() => {});
+  } catch (e) {
+    console.error('Error saving worn log to localStorage', e);
+  }
+
+  return newLog;
+}
+
+export async function getUserStyleProfile(userId?: string | null): Promise<UserStyleProfile> {
+  const uid = userId || 'default';
+  try {
+    const res = await fetch(apiUrl(`/api/user/style-profile?userId=${encodeURIComponent(uid)}`));
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.profile) {
+        return data.profile;
+      }
+    }
+  } catch (e) {
+    // Fall back to local calculation
+  }
+
+  const logs = loadWornLogs(userId);
+  const styleFreq: Record<string, number> = {};
+  const fitFreq: Record<string, number> = {};
+  const toneFreq: Record<string, number> = {};
+
+  logs.forEach(log => {
+    if (Array.isArray(log.styleTags)) {
+      log.styleTags.forEach(tag => {
+        if (tag) styleFreq[tag.toLowerCase()] = (styleFreq[tag.toLowerCase()] || 0) + 1;
+      });
+    }
+    if (log.fit) fitFreq[log.fit.toLowerCase()] = (fitFreq[log.fit.toLowerCase()] || 0) + 1;
+    if (log.colorTone) toneFreq[log.colorTone.toLowerCase()] = (toneFreq[log.colorTone.toLowerCase()] || 0) + 1;
+  });
+
+  const getTopKeys = (obj: Record<string, number>, limit: number) =>
+    Object.entries(obj)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit)
+      .map(([k]) => k);
+
+  return {
+    frequentStyles: getTopKeys(styleFreq, 4),
+    preferredFits: getTopKeys(fitFreq, 3),
+    favoriteTones: getTopKeys(toneFreq, 3),
+    recentWorn: logs.slice(0, 10),
+    totalWornCount: logs.length,
+  };
 }

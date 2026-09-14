@@ -1,6 +1,7 @@
 import { GarmentCategory, GarmentItem, Outfit, Occasion, ExternalSuggestion, StyleAesthetic } from '../types/wardrobe';
 import { shouldIncludeOuterwear, isHeelOrDressShoe } from './stylingEngine';
 import { formatGarmentName } from './colorTheory';
+import { UserStyleProfile } from './storage';
 
 interface GeminiOutfitResponse {
   outfits: {
@@ -125,7 +126,8 @@ export async function validateGeminiApiKey(apiKey: string): Promise<{ valid: boo
 export async function generateOutfitsWithGemini(
   wardrobe: GarmentItem[],
   occasion: Occasion,
-  apiKey: string
+  apiKey: string,
+  userProfile?: UserStyleProfile | null
 ): Promise<Outfit[]> {
   // Simplified inventory of wardrobe items for the prompt
   const inventory = wardrobe.map(i => ({
@@ -142,8 +144,12 @@ export async function generateOutfitsWithGemini(
     aesthetics: i.aesthetics,
   }));
 
+  const userStyleBias = userProfile?.frequentStyles?.length
+    ? `\nCLIENT STYLE BIAS: ${userProfile.frequentStyles.join(', ')}\n`
+    : '';
+
   const prompt = `You are an elite high-fashion digital stylist, personal shopper, and color theory expert.
-Your client wants 3 distinct, COMPLETE full outfits for the occasion: "${occasion.toUpperCase()}".
+Your client wants 3 distinct, COMPLETE full outfits for the occasion: "${occasion.toUpperCase()}".${userStyleBias}
 
 Here is the client's current wardrobe inventory:
 ${JSON.stringify(inventory, null, 2)}
@@ -403,7 +409,8 @@ Return ONLY valid JSON with no markdown backticks or commentary.`;
 export async function styleItemWithGemini(
   selectedItem: GarmentItem,
   wardrobe: GarmentItem[],
-  apiKey: string
+  apiKey: string,
+  userProfile?: UserStyleProfile | null
 ): Promise<Outfit[]> {
   const inventory = wardrobe.map(i => ({
     id: i.id,
@@ -416,9 +423,13 @@ export async function styleItemWithGemini(
     material: i.material,
   }));
 
+  const userStyleBias = userProfile?.frequentStyles?.length
+    ? `\nCLIENT STYLE BIAS: Preferred Aesthetics (${userProfile.frequentStyles.join(', ')}).\n`
+    : '';
+
   const prompt = `You are an elite celebrity fashion stylist and color theory specialist.
 Your client wants 3 distinct styling looks built around one specific hero piece from their closet:
-Hero Item: "${selectedItem.name}" (${selectedItem.colorName}, Category: ${selectedItem.category}, Fit: ${selectedItem.fit})
+Hero Item: "${selectedItem.name}" (${selectedItem.colorName}, Category: ${selectedItem.category}, Fit: ${selectedItem.fit})${userStyleBias}
 
 Here is the rest of their wardrobe:
 ${JSON.stringify(inventory, null, 2)}

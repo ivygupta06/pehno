@@ -1,5 +1,6 @@
 import { GarmentItem, Outfit, Occasion, ExternalSuggestion, StyleAesthetic } from '../types/wardrobe';
 import { evaluateColorHarmony } from './colorTheory';
+import { UserStyleProfile } from './storage';
 
 // Fashion style names and formulas
 interface StyleFormula {
@@ -290,7 +291,11 @@ const EXTERNAL_SUGGESTION_POOL: ExternalSuggestion[] = [
 /**
  * Calculates a comprehensive outfit compatibility score (0 - 100)
  */
-export function calculateCompatibilityScore(items: (GarmentItem | undefined)[], targetOccasion?: Occasion): {
+export function calculateCompatibilityScore(
+  items: (GarmentItem | undefined)[],
+  targetOccasion?: Occasion,
+  userProfile?: UserStyleProfile | null
+): {
   score: number;
   harmonyType: string;
   reasons: string[];
@@ -341,7 +346,36 @@ export function calculateCompatibilityScore(items: (GarmentItem | undefined)[], 
     }
   }
 
-  const finalScore = Math.min(99, Math.round(harmony.score * 0.45 + silhouetteScore * 0.35 + occasionScore * 0.20));
+  let styleBonus = 0;
+  if (userProfile) {
+    const frequentStyles = (userProfile.frequentStyles || []).map(s => s.toLowerCase());
+    const preferredFits = (userProfile.preferredFits || []).map(f => f.toLowerCase());
+
+    let matchedStyle: string | null = null;
+    let matchedFit: string | null = null;
+
+    activeItems.forEach(item => {
+      (item.aesthetics || []).forEach(aes => {
+        if (frequentStyles.includes(aes.toLowerCase()) && !matchedStyle) {
+          matchedStyle = aes;
+          styleBonus += 5;
+        }
+      });
+      if (item.fit && preferredFits.includes(item.fit.toLowerCase()) && !matchedFit) {
+        matchedFit = item.fit;
+        styleBonus += 5;
+      }
+    });
+
+    if (matchedStyle || matchedFit) {
+      const matchDetails = [matchedStyle ? `aesthetic "${matchedStyle}"` : null, matchedFit ? `fit "${matchedFit}"` : null]
+        .filter(Boolean)
+        .join(' & ');
+      reasons.push(`🎯 Personal Style Bias: Aligns with your preferred ${matchDetails}.`);
+    }
+  }
+
+  const finalScore = Math.min(99, Math.round(harmony.score * 0.45 + silhouetteScore * 0.35 + occasionScore * 0.20) + styleBonus);
 
   return {
     score: finalScore,
@@ -411,7 +445,7 @@ export function shouldIncludeOuterwear(
 /**
  * Generate 3 curated outfits for a specific occasion
  */
-export function generateOccasionOutfits(wardrobe: GarmentItem[], occasion: Occasion, count: number = 3): Outfit[] {
+export function generateOccasionOutfits(wardrobe: GarmentItem[], occasion: Occasion, count: number = 3, userProfile?: UserStyleProfile | null): Outfit[] {
   const outfits: Outfit[] = [];
 
   const tops = wardrobe.filter(i => i.category === 'tops' && (i.occasions.includes(occasion) || i.occasions.includes('casual')));
@@ -491,7 +525,7 @@ export function generateOccasionOutfits(wardrobe: GarmentItem[], occasion: Occas
       : undefined;
 
     const itemsToEvaluate = [top, bottom, dress, selectedOuterwear, shoe, bag, accessory];
-    const { score, harmonyType, reasons } = calculateCompatibilityScore(itemsToEvaluate, occasion);
+    const { score, harmonyType, reasons } = calculateCompatibilityScore(itemsToEvaluate, occasion, userProfile);
 
     // Pick 1-2 complementary external suggestions for missing items
     const rawSuggestions: ExternalSuggestion[] = EXTERNAL_SUGGESTION_POOL
@@ -699,7 +733,7 @@ export function generateOccasionOutfits(wardrobe: GarmentItem[], occasion: Occas
  * Generate styling options when user chooses ANY specific garment
  * e.g., User selects a top -> pairs with the user's uploaded jeans for a full complete outfit!
  */
-export function generateItemOutfits(selectedItem: GarmentItem, wardrobe: GarmentItem[]): Outfit[] {
+export function generateItemOutfits(selectedItem: GarmentItem, wardrobe: GarmentItem[], userProfile?: UserStyleProfile | null): Outfit[] {
   const outfits: Outfit[] = [];
 
   const availableBottoms = wardrobe.filter(i => i.category === 'bottoms' && i.id !== selectedItem.id);
@@ -831,7 +865,7 @@ export function generateItemOutfits(selectedItem: GarmentItem, wardrobe: Garment
     }
 
     const items = [top, bottom, dress, outer, shoe, bag, acc];
-    const { score, harmonyType } = calculateCompatibilityScore(items, mode.occasion);
+    const { score, harmonyType } = calculateCompatibilityScore(items, mode.occasion, userProfile);
 
     // Pick contextual external suggestions
     const externalSuggestions: ExternalSuggestion[] = EXTERNAL_SUGGESTION_POOL
