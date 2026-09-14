@@ -158,30 +158,14 @@ export async function clearServerActivity(): Promise<boolean> {
  * Only the creator should see backend / database administration controls.
  */
 export function isCreatorUser(user: User | null): boolean {
-  if (typeof window !== 'undefined') {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('creator') === 'true' || params.get('admin') === 'true') {
-      try {
-        localStorage.setItem('pehno_creator_access', 'true');
-      } catch (e) {}
-      return true;
-    }
-    if (localStorage.getItem('pehno_creator_access') === 'true') {
-      return true;
-    }
-  }
-
   if (!user) return false;
 
   if (user.role === 'creator' || user.role === 'admin') return true;
 
   const email = (user.email || '').toLowerCase().trim();
-  const name = (user.name || '').toLowerCase().trim();
 
-  // Known creator identifiers for Ivy Gupta
-  return email.includes('ivy') || 
-         email.includes('admin') || 
-         email.endsWith('@pehno.style') ||
-         name.includes('ivy') ||
-         name.includes('creator');
+  // Only Ivy Gupta (the creator) gets admin access
+  return email === 'ivygupta06@gmail.com' || 
+         email === 'ivy@pehno.style' ||
+         email === 'hersheysmilkshake@gmail.com';
 }
