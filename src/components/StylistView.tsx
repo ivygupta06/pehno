@@ -45,7 +45,8 @@ export const StylistView: React.FC<StylistViewProps> = ({
   const [userProfile, setUserProfile] = useState<UserStyleProfile | null>(null);
   const [wornNotice, setWornNotice] = useState<string | null>(null);
 
-  const hasApiKey = Boolean(geminiApiKey && geminiApiKey.trim().length > 15);
+  const hasApiKey = Boolean(geminiApiKey && geminiApiKey.trim().length > 0);
+
 
   // Fetch RAG user style profile on mount
   useEffect(() => {
