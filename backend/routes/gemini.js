@@ -4,8 +4,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const router = express.Router();
 
 // ── Gemini model configuration ─────────────────────────────────────────────────
-// Using gemini-2.5-flash — fast, cheap, multimodal, large context window.
-const GEMINI_MODEL = 'gemini-2.5-flash';
+// Using gemini-3.6-flash (current supported Google Generative AI model)
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 
 /**
  * Get the Gemini client. Throws a clear error if the API key is not set.

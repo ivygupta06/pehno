@@ -177,7 +177,7 @@ export const StylistView: React.FC<StylistViewProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-serif font-bold text-sm text-pastel-charcoal">
-                {hasApiKey ? 'Google Gemini 2.5 Flash Connected' : 'Connect Gemini AI for Deep Stylist Recommendations'}
+                {hasApiKey ? 'Google Gemini 3.6 Flash Connected' : 'Connect Gemini AI for Deep Stylist Recommendations'}
               </h3>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                 hasApiKey ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
@@ -317,7 +317,7 @@ export const StylistView: React.FC<StylistViewProps> = ({
             Target: <strong className="text-pastel-charcoal capitalize">{activeMode === 'occasion' ? selectedOccasion : selectedGarment?.name}</strong>
           </span>
           <span>•</span>
-          <span>Engine: <strong className="text-pastel-charcoal">{generationSource === 'gemini' ? 'Gemini 2.5 Flash' : 'Built-in Color Theory'}</strong></span>
+          <span>Engine: <strong className="text-pastel-charcoal">{generationSource === 'gemini' ? 'Gemini 3.6 Flash' : 'Built-in Color Theory'}</strong></span>
         </div>
 
         <button
