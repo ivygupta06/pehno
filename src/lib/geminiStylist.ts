@@ -50,6 +50,33 @@ async function callGeminiText(_apiKey: string, prompt: string, maxTokens?: numbe
 }
 
 /**
+ * Safely parse Gemini JSON responses, handling markdown code fences,
+ * leading/trailing commentary, and common formatting artifacts.
+ */
+function parseGeminiJsonResponse<T>(rawText: string): T {
+  let text = (rawText || '').trim();
+  // Remove markdown code fences if present (```json ... ``` or ``` ...)
+  text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+  // Extract outermost json object
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    text = text.substring(firstBrace, lastBrace + 1);
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch (err: any) {
+    // Attempt cleaning trailing commas before closing braces/brackets and unescaped control characters
+    const cleaned = text
+      .replace(/,\s*([}\]])/g, '$1')
+      .replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F]/g, '');
+    return JSON.parse(cleaned);
+  }
+}
+
+/**
  * Validate a Gemini API key by making a lightweight test call
  */
 export async function validateGeminiApiKey(_apiKey = ''): Promise<{ valid: boolean; error?: string }> {
@@ -166,12 +193,7 @@ Return a JSON object strictly adhering to this schema:
 Return ONLY valid JSON with no markdown backticks or commentary.`;
 
   const rawText = await callGeminiText(apiKey, prompt);
-
-  let cleanRaw = rawText.trim();
-  const jsonMatch = cleanRaw.match(/\{[\s\S]*\}/);
-  if (jsonMatch) cleanRaw = jsonMatch[0];
-
-  const parsed: GeminiOutfitResponse = JSON.parse(cleanRaw);
+  const parsed: GeminiOutfitResponse = parseGeminiJsonResponse<GeminiOutfitResponse>(rawText);
   const wardrobeMap = new Map(wardrobe.map(i => [i.id, i]));
 
   return parsed.outfits.map((o, idx) => {
@@ -441,12 +463,7 @@ Return JSON strictly adhering to schema:
 Return ONLY valid JSON with no markdown code blocks.`;
 
   const rawText = await callGeminiText(apiKey, prompt);
-
-  let cleanRaw = rawText.trim();
-  const jsonMatch = cleanRaw.match(/\{[\s\S]*\}/);
-  if (jsonMatch) cleanRaw = jsonMatch[0];
-
-  const parsed: GeminiOutfitResponse = JSON.parse(cleanRaw);
+  const parsed: GeminiOutfitResponse = parseGeminiJsonResponse<GeminiOutfitResponse>(rawText);
   const wardrobeMap = new Map(wardrobe.map(i => [i.id, i]));
 
   return parsed.outfits.map((o, idx) => {

@@ -866,10 +866,22 @@ Return ONLY valid JSON. No markdown code blocks, no explanation.`;
 
   // Safely extract JSON text even if wrapped in markdown fences.
   let cleanText = String(responseBody.text || '').trim();
-  const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
-  if (jsonMatch) cleanText = jsonMatch[0];
+  cleanText = cleanText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+  const firstBrace = cleanText.indexOf('{');
+  const lastBrace = cleanText.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    cleanText = cleanText.substring(firstBrace, lastBrace + 1);
+  }
 
-  const parsed: AnalysisResponse = JSON.parse(cleanText);
+  let parsed: AnalysisResponse;
+  try {
+    parsed = JSON.parse(cleanText);
+  } catch {
+    const sanitized = cleanText
+      .replace(/,\s*([}\]])/g, '$1')
+      .replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F]/g, '');
+    parsed = JSON.parse(sanitized);
+  }
   // Save an item-specific crop whenever the model supplies a usable box.
   // This is what prevents a Brown Tank card from showing the entire flat lay.
   const croppedGarments = await attachGarmentCrops(imageBase64, parsed.garments || []);

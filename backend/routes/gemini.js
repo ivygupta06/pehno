@@ -59,7 +59,7 @@ router.get('/health', requireAuth, async (req, res) => {
 // Body: { prompt: string, maxOutputTokens?: number }
 router.post('/text', requireAuth, async (req, res) => {
   try {
-    const { prompt, maxOutputTokens = 4096 } = req.body;
+    const { prompt, maxOutputTokens = 8192 } = req.body;
     if (!prompt || typeof prompt !== 'string') {
       return res.status(400).json({ success: false, error: 'prompt is required.' });
     }
@@ -70,7 +70,7 @@ router.post('/text', requireAuth, async (req, res) => {
       generationConfig: {
         maxOutputTokens,
         temperature: 0.7,
-        responseMimeType: 'text/plain',
+        responseMimeType: 'application/json',
       },
     });
 
@@ -110,9 +110,9 @@ router.post('/vision', requireAuth, async (req, res) => {
     const model = genAI.getGenerativeModel({
       model: GEMINI_MODEL,
       generationConfig: {
-        maxOutputTokens: 4096,
+        maxOutputTokens: 8192,
         temperature: 0.4,
-        responseMimeType: 'text/plain',
+        responseMimeType: 'application/json',
       },
     });
 
