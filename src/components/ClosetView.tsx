@@ -9,6 +9,7 @@ export interface ColorStoryOption {
   bgTint: string;
   borderHex: string;
   matchKeywords: string[];
+  matchHexes: string[];
 }
 
 const COLOR_STORIES: ColorStoryOption[] = [
@@ -18,7 +19,17 @@ const COLOR_STORIES: ColorStoryOption[] = [
     hex: '#F7F3E9',
     bgTint: 'rgba(247, 243, 233, 0.7)',
     borderHex: '#E5D5C5',
-    matchKeywords: ['cream', 'beige', 'oat', 'linen', 'ecru', 'tan', 'sand', 'camel', 'khaki', 'taupe', 'nude', 'ivory', 'biscuit', 'warm white'],
+    matchKeywords: ['cream', 'beige', 'oat', 'linen', 'ecru', 'tan', 'sand', 'camel', 'khaki', 'taupe', 'nude', 'biscuit'],
+    matchHexes: ['#f7f3e9', '#f4efea', '#f5ebe0', '#fff8dc', '#d4c5b9', '#c7b299', '#c49a6c'],
+  },
+  {
+    id: 'white',
+    name: 'Crisp White',
+    hex: '#FAF9F6',
+    bgTint: 'rgba(255, 255, 255, 0.88)',
+    borderHex: '#D6D3D1',
+    matchKeywords: ['white', 'ivory', 'off-white', 'warm white', 'optic', 'chalk', 'pearl', 'snow'],
+    matchHexes: ['#ffffff', '#fbfbfb', '#f5f5f5', '#faf9f6', '#fffdf0'],
   },
   {
     id: 'blue',
@@ -27,6 +38,7 @@ const COLOR_STORIES: ColorStoryOption[] = [
     bgTint: 'rgba(239, 246, 255, 0.85)',
     borderHex: '#93C5FD',
     matchKeywords: ['blue', 'denim', 'navy', 'sky', 'baby blue', 'cobalt', 'indigo', 'azure', 'cyan', 'slate', 'ocean', 'teal', 'aqua'],
+    matchHexes: ['#bae6fd', '#7ea6e0', '#1e40af', '#93c5fd', '#3b82f6', '#1d4ed8'],
   },
   {
     id: 'coral',
@@ -35,6 +47,7 @@ const COLOR_STORIES: ColorStoryOption[] = [
     bgTint: 'rgba(254, 242, 242, 0.85)',
     borderHex: '#FCA5A5',
     matchKeywords: ['red', 'coral', 'crimson', 'burgundy', 'wine', 'cherry', 'ruby', 'maroon', 'rose', 'terracotta', 'rust', 'brick'],
+    matchHexes: ['#d67474', '#f87171', '#9f1239', '#fca5a5', '#dc2626', '#b91c1c', '#75222d', '#57141b'],
   },
   {
     id: 'sage',
@@ -43,6 +56,7 @@ const COLOR_STORIES: ColorStoryOption[] = [
     bgTint: 'rgba(240, 253, 244, 0.85)',
     borderHex: '#86EFAC',
     matchKeywords: ['green', 'sage', 'olive', 'emerald', 'matcha', 'mint', 'forest', 'pistachio', 'khaki green', 'lime', 'jade'],
+    matchHexes: ['#d5e5da', '#88c9a1', '#86efac', '#065f46', '#16a34a', '#15803d'],
   },
   {
     id: 'lavender',
@@ -51,6 +65,7 @@ const COLOR_STORIES: ColorStoryOption[] = [
     bgTint: 'rgba(250, 245, 255, 0.85)',
     borderHex: '#C084FC',
     matchKeywords: ['purple', 'lavender', 'violet', 'lilac', 'plum', 'mauve', 'magenta', 'grape', 'amethyst', 'periwinkle'],
+    matchHexes: ['#e9d5ff', '#9a8ecb', '#c084fc', '#6b21a8', '#9333ea', '#7e22ce'],
   },
   {
     id: 'dark',
@@ -59,6 +74,7 @@ const COLOR_STORIES: ColorStoryOption[] = [
     bgTint: 'rgba(241, 245, 249, 0.85)',
     borderHex: '#475569',
     matchKeywords: ['black', 'charcoal', 'slate', 'dark', 'obsidian', 'midnight', 'espresso', 'graphite', 'ebony', 'onyx'],
+    matchHexes: ['#000000', '#18181b', '#363749', '#111827', '#1e293b', '#0f172a', '#334155', '#1a1a1a', '#121212'],
   },
   {
     id: 'yellow',
@@ -67,6 +83,7 @@ const COLOR_STORIES: ColorStoryOption[] = [
     bgTint: 'rgba(254, 252, 232, 0.95)',
     borderHex: '#FDE047',
     matchKeywords: ['yellow', 'gold', 'amber', 'butter', 'mustard', 'lemon', 'honey', 'canary', 'maize', 'marigold', 'blonde', 'sunflower'],
+    matchHexes: ['#f3f0c4', '#f5e89f', '#fdfd96', '#fef08a', '#facc15', '#fde047', '#eab308', '#f59e0b', '#d4af37', '#c8b17a'],
   },
   {
     id: 'pink',
@@ -75,59 +92,42 @@ const COLOR_STORIES: ColorStoryOption[] = [
     bgTint: 'rgba(253, 242, 248, 0.85)',
     borderHex: '#FBCFE8',
     matchKeywords: ['pink', 'blush', 'rose', 'fuchsia', 'bubblegum', 'salmon', 'peach', 'barbie'],
+    matchHexes: ['#fce7f3', '#f472b6', '#fbcfe8', '#9d174d', '#ec4899', '#db2777', '#e3b7c5'],
   },
 ];
 
+const COLOR_STORY_MATCH_ORDER = ['white', 'yellow', 'coral', 'blue', 'sage', 'lavender', 'pink', 'dark', 'cream'];
+
+const hasColorWord = (value: string, word: string) =>
+  new RegExp(`(^|[^a-z])${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=$|[^a-z])`, 'i').test(value);
+
+function getMatchingColorStoryIds(value: string): string[] {
+  return COLOR_STORY_MATCH_ORDER.filter(storyId => {
+    const story = COLOR_STORIES.find(option => option.id === storyId);
+    return story?.matchKeywords.some(keyword => hasColorWord(value, keyword));
+  });
+}
+
 function matchesColorStory(item: GarmentItem, storyId: string): boolean {
-  const colorName = (item.colorName || '').toLowerCase();
-  const name = (item.name || '').toLowerCase();
+  const colorName = (item.colorName || '').trim();
   const hex = (item.colorHex || '').toLowerCase();
-  const tags = (item.tags || []).map(t => t.toLowerCase()).join(' ');
 
-  // Only match on color-related fields: colorName, item name, and tags
-  // Deliberately NOT matching on material, subcategory, or category
-  const fullColorText = `${colorName} ${name} ${tags}`;
-
-  switch (storyId) {
-    case 'cream':
-      return /\b(cream|beige|oat|ecru|sand|camel|khaki|taupe|nude|ivory|biscuit|off-white)\b/i.test(fullColorText) ||
-             ['#faf9f6', '#f4efea', '#f7f3e9', '#f5ebe0', '#fffdf0', '#fff8dc'].includes(hex);
-
-    case 'yellow':
-      return /\b(yellow|butter|gold|mustard|lemon|honey|canary|marigold|sunflower)\b/i.test(fullColorText) ||
-             ['#fef08a', '#facc15', '#fde047', '#eab308', '#f59e0b'].includes(hex);
-
-    case 'blue':
-      return /\b(blue|denim|navy|sky|cobalt|indigo|azure|cyan|aqua)\b/i.test(fullColorText) ||
-             ['#bae6fd', '#7ea6e0', '#1e40af', '#93c5fd', '#3b82f6', '#1d4ed8'].includes(hex);
-
-    case 'coral':
-    case 'red':
-      return /\b(red|coral|crimson|burgundy|wine|cherry|ruby|maroon|terracotta|rust)\b/i.test(fullColorText) ||
-             ['#d67474', '#f87171', '#9f1239', '#fca5a5', '#dc2626', '#b91c1c'].includes(hex);
-
-    case 'sage':
-    case 'green':
-      return /\b(green|sage|olive|emerald|matcha|mint|forest|pistachio|lime|jade)\b/i.test(fullColorText) ||
-             ['#d5e5da', '#88c9a1', '#86efac', '#065f46', '#16a34a', '#15803d'].includes(hex);
-
-    case 'lavender':
-    case 'purple':
-      return /\b(purple|lavender|violet|lilac|plum|mauve|magenta|grape|periwinkle)\b/i.test(fullColorText) ||
-             ['#e9d5ff', '#9a8ecb', '#c084fc', '#6b21a8', '#9333ea', '#7e22ce'].includes(hex);
-
-    case 'pink':
-      return /\b(pink|blush|rose|fuchsia|bubblegum|salmon|peach)\b/i.test(fullColorText) ||
-             ['#fce7f3', '#f472b6', '#fbcfe8', '#9d174d', '#ec4899', '#db2777'].includes(hex);
-
-    case 'dark':
-    case 'black':
-      return /\b(black|charcoal|obsidian|midnight|espresso|graphite|ebony|onyx)\b/i.test(fullColorText) ||
-             ['#000000', '#18181b', '#363749', '#111827', '#1e293b', '#0f172a', '#334155'].includes(hex);
-
-    default:
-      return false;
+  // The vision label is the garment's source of truth. It is checked before
+  // names/tags, so a yellow dress with a cherry-print tag cannot enter Red.
+  const colorNameMatches = getMatchingColorStoryIds(colorName);
+  if (colorNameMatches.length > 0) {
+    return colorNameMatches[0] === storyId;
   }
+
+  const hexMatch = COLOR_STORIES.find(story => story.matchHexes.includes(hex));
+  if (hexMatch) {
+    return hexMatch.id === storyId;
+  }
+
+  // Older imports occasionally lack a useful colour label; only then fall
+  // back to the item name and its tags.
+  const fallbackText = `${item.name || ''} ${(item.tags || []).join(' ')}`;
+  return getMatchingColorStoryIds(fallbackText)[0] === storyId;
 }
 
 interface ClosetViewProps {
@@ -292,7 +292,7 @@ export const ClosetView: React.FC<ClosetViewProps> = ({
                   </button>
                 )}
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
                 {COLOR_STORIES.map(cs => {
                   const isActive = selectedColorStory === cs.id;
                   return (

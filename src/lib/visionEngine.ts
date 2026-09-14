@@ -1,5 +1,7 @@
 import { GarmentCategory, GarmentSubcategory, StyleAesthetic, Season, Occasion, ColorTone } from '../types/wardrobe';
 import { getApproximateColorName, formatGarmentName } from './colorTheory';
+import { apiUrl } from './api';
+import { getAuthHeaders, getAuthToken } from './auth';
 
 export interface RawDetectedGarment {
   name: string;
@@ -768,12 +770,11 @@ export async function analyzeImageLocally(
 }
 
 /**
- * Direct Gemini Multimodal API Integration
- * Supports Gemini 1.5 Flash, 2.0 Flash, 2.5 Flash with automatic fallback
+ * Gemini multimodal analysis through the authenticated server-side proxy.
  */
 export async function analyzeImageWithGemini(
   imageBase64: string,
-  apiKey: string,
+  _apiKey: string,
   modeHint?: 'single' | 'multi-item' | 'ootd'
 ): Promise<AnalysisResponse> {
   const prompt = `You are an elite high-fashion digital stylist, personal shopper, and visual AI classifier.
@@ -851,92 +852,27 @@ Return a valid JSON object strictly matching this schema:
 ${modeHint ? `Hint from user: Mode is '${modeHint}'.` : ''}
 Return ONLY valid JSON. No markdown code blocks, no explanation.`;
 
-  // Clean base64 string
-  const cleanBase64 = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
-  const mimeType = imageBase64.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/)?.[1] || 'image/jpeg';
+  if (!getAuthToken()) throw new Error('Sign in to use Gemini AI image analysis.');
 
-  const modelsToTry = [
-    'gemini-3.5-flash-lite',
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
-    'gemini-1.5-pro',
-  ];
-
-  let lastError: any = null;
-  const cleanKey = apiKey.trim();
-
-  for (const model of modelsToTry) {
-    try {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(cleanKey)}`;
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': cleanKey,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: prompt },
-                {
-                  inlineData: {
-                    mimeType,
-                    data: cleanBase64,
-                  },
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.15,
-            responseMimeType: 'application/json',
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        // If 404 model not found, try next model
-        if (response.status === 404) {
-          lastError = new Error(`Model ${model} not found (${response.status})`);
-          continue;
-        }
-        throw new Error(`Gemini API Error (${response.status}): ${errText}`);
-      }
-
-      const json = await response.json();
-      const parts = json.candidates?.[0]?.content?.parts || [];
-      const textPart = parts.find((p: any) => p.text && !p.thought) || parts.find((p: any) => p.text);
-      const textOutput = textPart?.text;
-      if (!textOutput) {
-        throw new Error('No response text received from Gemini.');
-      }
-
-      // Safely extract JSON text even if wrapped in markdown fences
-      let cleanText = textOutput.trim();
-      const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        cleanText = jsonMatch[0];
-      }
-
-      const parsed: AnalysisResponse = JSON.parse(cleanText);
-
-      // Save an item-specific crop whenever the model supplies a usable box.
-      // This is what prevents a Brown Tank card from showing the entire flat lay.
-      const croppedGarments = await attachGarmentCrops(imageBase64, parsed.garments || []);
-      parsed.garments = makeGarmentNamesUnique(croppedGarments);
-
-      return parsed;
-    } catch (err: any) {
-      lastError = err;
-      if (err.message && err.message.includes('404')) {
-        continue;
-      }
-      throw err;
-    }
+  const response = await fetch(apiUrl('/api/gemini/vision'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify({ prompt, imageDataUrl: imageBase64 }),
+  });
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok || !responseBody.success) {
+    throw new Error(responseBody.error || 'Gemini could not analyze this image.');
   }
 
-  throw lastError || new Error('All Gemini models failed to analyze image.');
+  // Safely extract JSON text even if wrapped in markdown fences.
+  let cleanText = String(responseBody.text || '').trim();
+  const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+  if (jsonMatch) cleanText = jsonMatch[0];
+
+  const parsed: AnalysisResponse = JSON.parse(cleanText);
+  // Save an item-specific crop whenever the model supplies a usable box.
+  // This is what prevents a Brown Tank card from showing the entire flat lay.
+  const croppedGarments = await attachGarmentCrops(imageBase64, parsed.garments || []);
+  parsed.garments = makeGarmentNamesUnique(croppedGarments);
+  return parsed;
 }

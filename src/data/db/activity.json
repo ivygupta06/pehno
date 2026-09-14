@@ -1,5 +1,14 @@
 [
   {
+    "id": "act-1789409691180-wa4n",
+    "timestamp": 1789409691180,
+    "type": "LOGIN",
+    "email": "ivygupta06@gmail.com",
+    "userName": "ivygupta06@gmail.com",
+    "browser": "Safari",
+    "details": "Logged in from Safari"
+  },
+  {
     "id": "act-1789402216690-6uks",
     "timestamp": 1789402216690,
     "type": "LOGIN",

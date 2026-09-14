@@ -8,6 +8,7 @@ import { connectDB } from './db.js';
 
 import authRouter from './routes/auth.js';
 import wardrobeRouter from './routes/wardrobe.js';
+import geminiRouter from './routes/gemini.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -358,6 +359,8 @@ app.get(['/', '/admin'], (req, res) => {
 // Mount modular routes
 app.use('/api/auth', authRouter);
 app.use('/api/wardrobe', wardrobeRouter);
+app.use('/api/gemini', geminiRouter);
+
 
 // Start server (connect to MongoDB first if configured)
 async function startServer() {

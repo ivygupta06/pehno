@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
-import { X, Upload, Sparkles, Check, RefreshCw, Trash2, Key, ExternalLink, AlertTriangle, ArrowRightLeft } from 'lucide-react';
+import { X, Upload, Sparkles, Check, RefreshCw, Trash2, AlertTriangle, ArrowRightLeft } from 'lucide-react';
 import { GarmentCategory, GarmentItem } from '../types/wardrobe';
 import { analyzeImageLocally, analyzeImageWithGemini, compressAndResizeImage, RawDetectedGarment } from '../lib/visionEngine';
 import { formatGarmentName } from '../lib/colorTheory';
-import { validateGeminiApiKey } from '../lib/geminiStylist';
 import { checkGarmentDuplicate, DuplicateMatch } from '../lib/duplicateDetector';
+import { getAuthToken } from '../lib/auth';
 
 interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddGarments: (items: GarmentItem[]) => void;
-  geminiApiKey?: string;
-  onSaveApiKey?: (key: string) => void;
   wardrobe?: GarmentItem[];
   onReplaceGarment?: (replacedId: string, newItem: GarmentItem) => void;
 }
@@ -41,8 +39,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({
   isOpen,
   onClose,
   onAddGarments,
-  geminiApiKey,
-  onSaveApiKey,
   wardrobe = [],
   onReplaceGarment,
 }) => {
@@ -54,38 +50,9 @@ export const UploadModal: React.FC<UploadModalProps> = ({
   const [analysisSummary, setAnalysisSummary] = useState<string>('');
   const [duplicateMatches, setDuplicateMatches] = useState<Record<number, DuplicateMatch>>({});
   const [replaceTargetMap, setReplaceTargetMap] = useState<Record<number, string>>({});
-  const [activeKey, setActiveKey] = useState(geminiApiKey || '');
-  const [isEditingKey, setIsEditingKey] = useState(false);
-  const [keyInput, setKeyInput] = useState('');
-  const [isConnectingKey, setIsConnectingKey] = useState(false);
-  const [keyError, setKeyError] = useState<string | null>(null);
-
   if (!isOpen) return null;
 
-  const currentKey = activeKey || geminiApiKey || '';
-  const hasValidKey = Boolean(currentKey && currentKey.trim().length > 15);
-
-  const handleConnectKey = async () => {
-    if (!keyInput.trim()) return;
-    setIsConnectingKey(true);
-    setKeyError(null);
-
-    const check = await validateGeminiApiKey(keyInput.trim());
-    setIsConnectingKey(false);
-
-    if (check.valid) {
-      setActiveKey(keyInput.trim());
-      if (onSaveApiKey) onSaveApiKey(keyInput.trim());
-      setIsEditingKey(false);
-      setKeyInput('');
-      // If there is already an image uploaded, re-run with Gemini!
-      if (imagePreview) {
-        runDetection(imagePreview, mode, keyInput.trim());
-      }
-    } else {
-      setKeyError(check.error || 'Invalid API key. Please check your key from Google AI Studio.');
-    }
-  };
+  const hasGemini = Boolean(getAuthToken());
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -95,7 +62,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
         const rawBase64 = event.target?.result as string;
         const { dataUrl } = await compressAndResizeImage(rawBase64, 800);
         setImagePreview(dataUrl);
-        runDetection(dataUrl, mode, currentKey);
+        runDetection(dataUrl, mode);
       };
       reader.readAsDataURL(file);
     }
@@ -104,13 +71,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({
   const handlePresetSelect = (preset: typeof SAMPLE_PRESETS[0]) => {
     setMode(preset.mode);
     setImagePreview(preset.url);
-    runDetection(preset.url, preset.mode, currentKey);
+    runDetection(preset.url, preset.mode);
   };
 
   const runDetection = async (
     imgSrc: string,
     selectedMode: 'single' | 'multi-item' | 'ootd',
-    keyToUse: string = currentKey
   ) => {
     setIsAnalyzing(true);
     setDetectedGarments([]);
@@ -130,8 +96,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({
         } catch (e) {}
       }
 
-      if (keyToUse && keyToUse.trim().length > 15 && effectiveImgSrc.startsWith('data:image')) {
-        const geminiResult = await analyzeImageWithGemini(effectiveImgSrc, keyToUse, selectedMode);
+      if (hasGemini && effectiveImgSrc.startsWith('data:image')) {
+        const geminiResult = await analyzeImageWithGemini(effectiveImgSrc, '', selectedMode);
         garmentsFound = geminiResult.garments.map(g => ({
           ...g,
           name: formatGarmentName(g.name, g.colorName, g.category, g.subcategory),
@@ -310,99 +276,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({
           </button>
         </div>
 
-        {/* AI Key Status / Quick Connect Banner */}
-        <div className="mt-4">
-          {hasValidKey ? (
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-900 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="font-bold">Google Gemini AI Vision Active</span>
-                <span className="text-[10px] text-emerald-700 hidden sm:inline">• Identifies dresses, tops, jeans, fit & count accurately</span>
-              </div>
-              <button
-                onClick={() => setIsEditingKey(!isEditingKey)}
-                className="text-[11px] font-semibold text-emerald-800 hover:underline flex items-center gap-1"
-              >
-                <span>{isEditingKey ? 'Close' : 'Change Key'}</span>
-              </button>
-            </div>
-          ) : (
-            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-pastel-butter-light via-pastel-cream-100 to-pastel-lavender-light border border-pastel-sand/80 shadow-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="p-1 rounded-lg bg-amber-100 text-amber-700">
-                    <Key className="w-3.5 h-3.5" />
-                  </span>
-                  <span className="text-xs font-bold text-pastel-charcoal">
-                    Connect Google Gemini AI for High-Precision Detection
-                  </span>
-                </div>
-                <a
-                  href="https://aistudio.google.com/app/apikey"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-[11px] font-bold text-pastel-sage-dark hover:underline flex items-center gap-1"
-                >
-                  <span>Get Free Key</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-              <p className="text-[11px] text-pastel-muted">
-                Paste your free key from Google AI Studio to accurately identify dresses (not tops), denim silhouettes, and exact piece counts.
-              </p>
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="password"
-                  placeholder="Paste AIzaSy... key from Google AI Studio"
-                  value={keyInput}
-                  onChange={(e) => setKeyInput(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl bg-white border border-pastel-sand text-xs text-pastel-charcoal focus:outline-none focus:border-pastel-sage-medium"
-                />
-                <button
-                  onClick={handleConnectKey}
-                  disabled={isConnectingKey || !keyInput.trim()}
-                  className="px-4 py-2 rounded-xl bg-pastel-sage-dark text-white font-bold text-xs shadow-soft hover:shadow-soft-lg transition-all flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  {isConnectingKey ? (
-                    <>
-                      <RefreshCw className="w-3 h-3 animate-spin" />
-                      <span>Verifying...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Connect AI</span>
-                    </>
-                  )}
-                </button>
-              </div>
-              {keyError && (
-                <p className="text-[10px] text-rose-600 font-semibold">{keyError}</p>
-              )}
-            </div>
-          )}
-
-          {isEditingKey && (
-            <div className="mt-2 p-3 rounded-2xl bg-white border border-pastel-sand space-y-2">
-              <span className="text-xs font-bold text-pastel-charcoal">Update Gemini Key</span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="password"
-                  placeholder="Paste new AIzaSy... key"
-                  value={keyInput}
-                  onChange={(e) => setKeyInput(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl bg-pastel-cream-100 border border-pastel-sand text-xs text-pastel-charcoal focus:outline-none"
-                />
-                <button
-                  onClick={handleConnectKey}
-                  disabled={isConnectingKey || !keyInput.trim()}
-                  className="px-3.5 py-2 rounded-xl bg-pastel-sage-dark text-white font-bold text-xs"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          )}
+        <div className={`mt-4 p-3 rounded-2xl text-xs ${hasGemini ? 'bg-emerald-50 border border-emerald-200/80 text-emerald-900' : 'bg-pastel-cream-200 border border-pastel-sand text-pastel-muted'}`}>
+          <div className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${hasGemini ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
+            <span className="font-bold">{hasGemini ? 'Secure Gemini AI Vision Active' : 'Sign in to unlock Gemini AI Vision'}</span>
+          </div>
+          <p className="mt-1 text-[10px]">{hasGemini ? 'Your photo is analyzed through Pehno’s protected server.' : 'You can still use local garment detection without an account.'}</p>
         </div>
 
         {/* Upload Mode Switcher */}
@@ -513,7 +392,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pastel-sage via-pastel-lavender to-pastel-butter animate-pulse" />
                     <RefreshCw className="w-8 h-8 animate-spin text-pastel-butter mb-2" />
                     <span className="text-xs font-bold tracking-widest uppercase text-white bg-pastel-charcoal/70 px-3 py-1.5 rounded-full">
-                      {hasValidKey ? 'Gemini AI Vision analyzing silhouettes & cuts...' : 'Scanning garment cuts & color palette...'}
+                      {hasGemini ? 'Gemini AI Vision analyzing silhouettes & cuts...' : 'Scanning garment cuts & color palette...'}
                     </span>
                   </div>
                 )}

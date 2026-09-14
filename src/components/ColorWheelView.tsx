@@ -35,14 +35,14 @@ export const WHEEL_SEGMENTS: WheelSegment[] = [
     label: 'Yellow',
     colorHex: '#EAB308',
     darkText: true,
-    matchingKeywords: ['yellow', 'gold', 'mustard', 'lemon', 'cream', 'butter', 'sunshine', 'amber'],
+    matchingKeywords: ['yellow', 'gold', 'mustard', 'lemon', 'butter', 'sunshine', 'amber'],
   },
   {
     name: 'Green',
     label: 'Green',
     colorHex: '#16A34A',
     darkText: false,
-    matchingKeywords: ['green', 'olive', 'sage', 'emerald', 'mint', 'khaki', 'forest', 'pistachio'],
+    matchingKeywords: ['green', 'olive', 'sage', 'emerald', 'mint', 'forest', 'pistachio'],
   },
   {
     name: 'Blue',
@@ -52,25 +52,11 @@ export const WHEEL_SEGMENTS: WheelSegment[] = [
     matchingKeywords: ['blue', 'denim', 'navy', 'indigo', 'sky', 'cobalt', 'washer blue', 'light blue'],
   },
   {
-    name: 'Purple',
-    label: 'Purple',
-    colorHex: '#7C3AED',
-    darkText: false,
-    matchingKeywords: ['purple', 'lavender', 'lilac', 'plum', 'mauve', 'violet', 'grape'],
-  },
-  {
     name: 'Pink',
     label: 'Pink',
     colorHex: '#EC4899',
     darkText: false,
     matchingKeywords: ['pink', 'rose', 'blush', 'magenta', 'fuchsia', 'coral pink', 'pastel pink'],
-  },
-  {
-    name: 'Beige',
-    label: 'Beige',
-    colorHex: '#D97706',
-    darkText: false,
-    matchingKeywords: ['beige', 'tan', 'nude', 'camel', 'oat', 'cream', 'khaki', 'sand', 'taupe', 'brown'],
   },
   {
     name: 'Red',
@@ -116,6 +102,14 @@ export const COLOR_SHOPPING_RECOMMENDATIONS: Record<string, ColorShoppingOption[
     },
   ],
   Yellow: [
+    {
+      category: 'Dresses',
+      name: 'Butter Yellow Sundress',
+      colorName: 'Butter Yellow',
+      colorHex: '#FEF08A',
+      reasoning: 'An airy butter-yellow sundress makes the colour the focal point without competing layers.',
+      searchQuery: 'Butter Yellow Sundress women',
+    },
     {
       category: 'Tops',
       name: 'Buttercream Knit Top',
@@ -247,6 +241,14 @@ export const COLOR_SHOPPING_RECOMMENDATIONS: Record<string, ColorShoppingOption[
   ],
   Red: [
     {
+      category: 'Dresses',
+      name: 'Scarlet Wrap Dress',
+      colorName: 'Scarlet Red',
+      colorHex: '#DC2626',
+      reasoning: 'A polished scarlet wrap dress gives the red story a clear, confident centrepiece.',
+      searchQuery: 'Scarlet Red Wrap Dress women',
+    },
+    {
       category: 'Tops',
       name: 'Crimson Silk Blouse',
       colorName: 'Scarlet Crimson',
@@ -269,6 +271,32 @@ export const COLOR_SHOPPING_RECOMMENDATIONS: Record<string, ColorShoppingOption[
       colorHex: '#DC2626',
       reasoning: 'Statement ruby red slingback heels for evening outfits.',
       searchQuery: 'Ruby Red Slingback Heels',
+    },
+  ],
+  White: [
+    {
+      category: 'Dresses',
+      name: 'White Cotton Sundress',
+      colorName: 'Crisp White',
+      colorHex: '#FAF9F6',
+      reasoning: 'A clean white sundress is a versatile base for denim, tan leather, or a bright accessory.',
+      searchQuery: 'White Cotton Sundress women',
+    },
+    {
+      category: 'Outerwear',
+      name: 'Ivory Cropped Cardigan',
+      colorName: 'Soft Ivory',
+      colorHex: '#FFFDF5',
+      reasoning: 'An ivory cropped cardigan adds light texture while keeping an all-white look intentional.',
+      searchQuery: 'Ivory Cropped Cardigan women',
+    },
+    {
+      category: 'Shoes',
+      name: 'White Leather Sneakers',
+      colorName: 'Crisp White',
+      colorHex: '#FAF9F6',
+      reasoning: 'Minimal white leather sneakers ground the palette for an easy everyday finish.',
+      searchQuery: 'White Leather Sneakers women',
     },
   ],
   Orange: [
@@ -297,6 +325,44 @@ export const COLOR_SHOPPING_RECOMMENDATIONS: Record<string, ColorShoppingOption[
       searchQuery: 'Peach Woven Straw Tote Bag',
     },
   ],
+};
+
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const hasColorKeyword = (value: string, keyword: string) => {
+  const normalized = value.toLowerCase().replace(/[_/]+/g, ' ');
+  return new RegExp(`(^|[^a-z])${escapeRegExp(keyword.toLowerCase())}(?=$|[^a-z])`).test(normalized);
+};
+
+/**
+ * Uses the detected primary colour first. This prevents a garment tagged with a
+ * secondary styling word from appearing in the wrong wheel result (for example,
+ * a yellow dress tagged "red-carpet" appearing under Red).
+ */
+export const itemMatchesWheelSegment = (item: GarmentItem, segment: WheelSegment) => {
+  const colorName = (item.colorName || '').trim();
+  const primaryColorMatches = WHEEL_SEGMENTS.filter(candidate =>
+    candidate.matchingKeywords.some(keyword => hasColorKeyword(colorName, keyword))
+  );
+
+  if (primaryColorMatches.length > 0) {
+    return primaryColorMatches.some(candidate => candidate.name === segment.name);
+  }
+
+  const fallbackDetails = [item.name || '', ...(item.tags || [])];
+  return fallbackDetails.some(detail =>
+    segment.matchingKeywords.some(keyword => hasColorKeyword(detail, keyword))
+  );
+};
+
+const heroPriority: Record<GarmentItem['category'], number> = {
+  dresses: 0,
+  tops: 1,
+  bottoms: 2,
+  outerwear: 3,
+  shoes: 4,
+  bags: 5,
+  accessories: 6,
 };
 
 export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
@@ -402,23 +468,18 @@ export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
   const composeColorOutfit = (segment: WheelSegment) => {
     const activeWardrobe = wardrobe.length > 0 ? wardrobe : INITIAL_WARDROBE;
 
-    // Filter items matching the segment keywords or hex/tone
-    const matches = activeWardrobe.filter((item) => {
-      const nameLower = (item.name || '').toLowerCase();
-      const colorLower = (item.colorName || '').toLowerCase();
-      const tags = (item.tags || []).map((t) => t.toLowerCase());
-
-      return segment.matchingKeywords.some(
-        (kw) => nameLower.includes(kw) || colorLower.includes(kw) || tags.some((t) => t.includes(kw))
-      );
-    });
+    const matches = activeWardrobe.filter(item => itemMatchesWheelSegment(item, segment));
 
     setMatchingItems(matches);
     setShoppingOptions(COLOR_SHOPPING_RECOMMENDATIONS[segment.name] || []);
 
     // IF user HAS garments in this color in their closet:
     if (matches.length > 0) {
-      const heroGarment = matches[0];
+      // Prefer a dress as the hero when one is available, then build around it.
+      // This avoids a small accessory taking over a full-colour outfit result.
+      const heroGarment = [...matches].sort(
+        (a, b) => heroPriority[a.category] - heroPriority[b.category]
+      )[0];
 
       let top: GarmentItem | undefined;
       let bottom: GarmentItem | undefined;
@@ -508,6 +569,14 @@ export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
       // IF user DOES NOT HAVE garments in this color in their closet:
       setGeneratedOutfit(null);
     }
+  };
+
+  const handleSelectColor = (segment: WheelSegment) => {
+    if (isSpinning) return;
+    setSelectedSegment(segment);
+    setGeneratedOutfit(null);
+    setSavedSuccess(false);
+    composeColorOutfit(segment);
   };
 
   const isFavorite = generatedOutfit
@@ -659,6 +728,35 @@ export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
               </h2>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Direct selection makes each palette testable without waiting for another spin. */}
+      <div className="text-center space-y-3">
+        <p className="text-xs font-bold uppercase tracking-widest text-pastel-muted">
+          Or choose a colour directly
+        </p>
+        <div className="flex flex-wrap justify-center gap-2">
+          {WHEEL_SEGMENTS.map(segment => (
+            <button
+              key={segment.name}
+              type="button"
+              onClick={() => handleSelectColor(segment)}
+              disabled={isSpinning}
+              aria-pressed={selectedSegment?.name === segment.name}
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
+                selectedSegment?.name === segment.name
+                  ? 'border-pastel-charcoal bg-pastel-charcoal text-white shadow-soft'
+                  : 'border-pastel-sand bg-white text-pastel-charcoal hover:border-amber-400 hover:shadow-xs'
+              } ${isSpinning ? 'cursor-not-allowed opacity-50' : ''}`}
+            >
+              <span
+                className="h-3 w-3 rounded-full border border-black/15"
+                style={{ backgroundColor: segment.colorHex }}
+              />
+              {segment.label}
+            </button>
+          ))}
         </div>
       </div>
 

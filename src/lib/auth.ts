@@ -4,6 +4,27 @@ import { apiUrl } from './api';
 const SESSION_KEY = 'pehno_current_session_user_id_v1';
 const USER_CACHE_KEY = 'pehno_active_user_cache_v1';
 
+/**
+ * Returns the current session user ID (stored in localStorage after sign-in),
+ * or null if not signed in. Used by Gemini proxy calls as proof of auth.
+ */
+export function getAuthToken(): string | null {
+  try {
+    return localStorage.getItem(SESSION_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Returns the Authorization header object to attach to server-side Gemini
+ * proxy requests. Uses the session user ID as a Bearer token.
+ */
+export function getAuthHeaders(): Record<string, string> {
+  const token = getAuthToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export const DEFAULT_USER: User = {
   id: 'user-demo-guest',
   name: 'demo@pehno.style',

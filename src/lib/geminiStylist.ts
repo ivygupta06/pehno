@@ -2,6 +2,8 @@ import { GarmentCategory, GarmentItem, Outfit, Occasion, ExternalSuggestion, Sty
 import { shouldIncludeOuterwear, isHeelOrDressShoe } from './stylingEngine';
 import { formatGarmentName } from './colorTheory';
 import { UserStyleProfile } from './storage';
+import { apiUrl } from './api';
+import { getAuthHeaders, getAuthToken } from './auth';
 
 interface GeminiOutfitResponse {
   outfits: {
@@ -29,92 +31,35 @@ interface GeminiOutfitResponse {
   }[];
 }
 
-const GEMINI_MODELS = [
-  'gemini-3.5-flash-lite',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
-];
-
 /**
- * Execute Gemini text generation with multi-model fallback
+ * Execute Gemini text generation through the server-side proxy. The apiKey
+ * parameter is retained for backwards-compatible callers, but is never used
+ * or sent from the browser.
  */
-async function callGeminiText(apiKey: string, prompt: string, maxTokens?: number): Promise<string> {
-  let lastError: any = null;
-  const cleanKey = apiKey.trim();
+async function callGeminiText(_apiKey: string, prompt: string, maxTokens?: number): Promise<string> {
+  if (!getAuthToken()) throw new Error('Sign in to use Gemini AI.');
 
-  for (const model of GEMINI_MODELS) {
-    try {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(cleanKey)}`;
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': cleanKey,
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            responseMimeType: 'application/json',
-            ...(maxTokens ? { maxOutputTokens: maxTokens } : {}),
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          lastError = new Error(`Model ${model} not found (404)`);
-          continue;
-        }
-        const errText = await response.text();
-        let msg = `Gemini API Error (${response.status})`;
-        try {
-          const parsed = JSON.parse(errText);
-          msg = parsed.error?.message || msg;
-        } catch (e) {}
-
-        if (msg.includes('OAuth 2') || msg.includes('authentication') || msg.includes('API key') || msg.includes('INVALID_ARGUMENT')) {
-          msg = 'Invalid Google Gemini API key. Please generate a free key from Google AI Studio (https://aistudio.google.com/app/apikey) starting with "AIzaSy".';
-        }
-        throw new Error(msg);
-      }
-
-      const json = await response.json();
-      const parts = json.candidates?.[0]?.content?.parts || [];
-      const textPart = parts.find((p: any) => p.text && !p.thought) || parts.find((p: any) => p.text);
-      const rawText = textPart?.text;
-      if (!rawText) {
-        lastError = new Error(`Model ${model} returned empty response.`);
-        continue;
-      }
-      return rawText;
-    } catch (err: any) {
-      lastError = err;
-      // If auth credential or API key error, stop loop immediately
-      if (err.message && (err.message.includes('API key') || err.message.includes('AIzaSy') || err.message.includes('Invalid'))) {
-        throw err;
-      }
-      // Otherwise try next fallback model
-      continue;
-    }
-  }
-
-  throw lastError || new Error('All Gemini models failed to respond.');
+  const response = await fetch(apiUrl('/api/gemini/text'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify({ prompt, maxOutputTokens: maxTokens }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.success) throw new Error(data.error || 'Gemini request failed.');
+  return data.text;
 }
 
 /**
  * Validate a Gemini API key by making a lightweight test call
  */
-export async function validateGeminiApiKey(apiKey: string): Promise<{ valid: boolean; error?: string }> {
-  if (!apiKey || apiKey.trim().length < 15) {
-    return { valid: false, error: 'API key is too short or empty.' };
-  }
-
+export async function validateGeminiApiKey(_apiKey = ''): Promise<{ valid: boolean; error?: string }> {
   try {
-    // 100 maxOutputTokens allows Gemini enough space to comfortably output valid JSON
-    await callGeminiText(apiKey, 'Respond with {"status": "ok"}', 100);
-    return { valid: true };
+    if (!getAuthToken()) return { valid: false, error: 'Sign in to use Gemini AI.' };
+    const response = await fetch(apiUrl('/api/gemini/health'), { headers: getAuthHeaders() });
+    const data = await response.json().catch(() => ({}));
+    return data.success && data.configured
+      ? { valid: true }
+      : { valid: false, error: data.error || 'Gemini is not configured on the server.' };
   } catch (err: any) {
     return { valid: false, error: err.message || 'Network connection failed.' };
   }

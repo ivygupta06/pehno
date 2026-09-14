@@ -6,13 +6,10 @@ import {
   saveWardrobe,
   loadFavorites,
   saveFavorites,
-  loadSettings,
-  saveSettings,
   resetWardrobe,
   syncWardrobeWithServer,
-  UserSettings,
 } from './lib/storage';
-import { getCurrentUser, signOut as authSignOut, isCreatorUser } from './lib/auth';
+import { getAuthToken, getCurrentUser, signOut as authSignOut, isCreatorUser } from './lib/auth';
 import { Navbar } from './components/Navbar';
 import { ClosetView } from './components/ClosetView';
 import { StylistView } from './components/StylistView';
@@ -30,7 +27,6 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'closet' | 'stylist' | 'studio' | 'favorites' | 'spin'>('closet');
   const [wardrobe, setWardrobe] = useState<GarmentItem[]>([]);
   const [favorites, setFavorites] = useState<Outfit[]>([]);
-  const [settings, setSettings] = useState<UserSettings>({ geminiApiKey: '' });
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // Modals & transient selections
@@ -46,9 +42,13 @@ export const App: React.FC = () => {
   useEffect(() => {
     const user = getCurrentUser();
     setCurrentUser(user);
-    const loadedS = loadSettings();
-    setSettings(loadedS);
   }, []);
+
+  // Each tab is a separate workspace. Reset the page position so the Spin
+  // Wheel always opens with its pointer, heading, and controls in view.
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  }, [activeTab]);
 
   // When currentUser changes (e.g. login / logout), load that user's wardrobe & favorites
   useEffect(() => {
@@ -178,7 +178,8 @@ export const App: React.FC = () => {
     setCurrentUser(null);
   };
 
-  const hasGeminiKey = Boolean(settings.geminiApiKey && settings.geminiApiKey.trim().length > 15);
+  const hasGeminiKey = Boolean(getAuthToken());
+  const geminiConnection = hasGeminiKey ? 'server-managed' : '';
 
   return (
     <div className="min-h-screen bg-pastel-cream-100 flex flex-col selection:bg-pastel-lavender selection:text-pastel-charcoal">
@@ -216,7 +217,7 @@ export const App: React.FC = () => {
             onSaveOutfitToFavorites={handleSaveOutfitToFavorites}
             isOutfitSaved={isOutfitSaved}
             onViewItemDetail={(g) => setItemDetail(g)}
-            geminiApiKey={settings.geminiApiKey}
+            geminiApiKey={geminiConnection}
             onOpenSettings={() => setSettingsOpen(true)}
           />
         )}
@@ -254,14 +255,8 @@ export const App: React.FC = () => {
         isOpen={uploadOpen}
         onClose={() => setUploadOpen(false)}
         onAddGarments={handleAddGarments}
-        geminiApiKey={settings.geminiApiKey}
         wardrobe={wardrobe}
         onReplaceGarment={handleReplaceGarment}
-        onSaveApiKey={(key) => {
-          const updated = { ...settings, geminiApiKey: key };
-          setSettings(updated);
-          saveSettings(updated);
-        }}
       />
 
       {/* Wardrobe Duplicates Scanner & Eliminator Modal */}
@@ -290,11 +285,6 @@ export const App: React.FC = () => {
       <SettingsModal
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
-        settings={settings}
-        onSaveSettings={(newS) => {
-          setSettings(newS);
-          saveSettings(newS);
-        }}
         onResetWardrobe={handleResetWardrobe}
         onClearAll={handleClearAll}
       />

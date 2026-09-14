@@ -17,18 +17,7 @@
     "avatarColor": "#FEF08A",
     "persona": "romantic",
     "createdAt": 1789315600000,
-    "lastLoginAt": 1789402216688
-  },
-  {
-    "id": "931f26f0-73b1-413b-a21b-3ba3b3856f8e",
-    "name": "Saumya",
-    "email": "hersheysmilkshake@gmail.com",
-    "passwordHash": "scrypt$f2964d815773ae747b3456dc2c7c8ccb$13c64498f28679756612c2bc1e18a2889216ca1adaab62dd03d1fa805892e2ba15816914a6e810ebe3ff6c48bb47f87107d447e3bd5cc204b25f7b2aeeb23ca3",
-    "avatarColor": "#E9D5FF",
-    "persona": "romantic",
-    "role": "user",
-    "createdAt": 1789367132687,
-    "lastLoginAt": 1789367132687
+    "lastLoginAt": 1789409691180
   },
   {
     "id": "1cfe8243-db02-4056-af60-81feb640a533",
