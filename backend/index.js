@@ -1,8 +1,10 @@
+import 'dotenv/config.js';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { connectDB } from './db.js';
 
 import authRouter from './routes/auth.js';
 import wardrobeRouter from './routes/wardrobe.js';
@@ -23,7 +25,20 @@ if (!fs.existsSync(dbDir)) {
 
 // Middlewares
 app.use(cors({
-  origin: true,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Render health checks)
+    // and any vercel.app domain or localhost in dev
+    if (
+      !origin ||
+      origin.includes('localhost') ||
+      origin.includes('vercel.app') ||
+      origin.includes('pehno') // your custom domain if you add one later
+    ) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all for now — tighten after deploy
+    }
+  },
   credentials: true,
 }));
 
@@ -344,14 +359,21 @@ app.get(['/', '/admin'], (req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/wardrobe', wardrobeRouter);
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log('\n\x1b[35m' + '='.repeat(48) + '\x1b[0m');
-  console.log('\x1b[35m👗 PEHNO STANDALONE EXPRESS BACKEND ACTIVE\x1b[0m');
-  console.log(`\x1b[36m📡 Server URL:\x1b[0m    http://localhost:${PORT}`);
-  console.log(`\x1b[36m🏥 Health Check:\x1b[0m  http://localhost:${PORT}/api/health`);
-  console.log(`\x1b[36m📁 Database Path:\x1b[0m ${dbDir}`);
-  console.log('\x1b[35m' + '='.repeat(48) + '\x1b[0m\n');
-});
+// Start server (connect to MongoDB first if configured)
+async function startServer() {
+  await connectDB();
+
+  app.listen(PORT, '0.0.0.0', () => {
+    const dbType = process.env.MONGODB_URI ? 'MongoDB Atlas' : 'JSON files (local)';
+    console.log('\n\x1b[35m' + '='.repeat(48) + '\x1b[0m');
+    console.log('\x1b[35m👗 PEHNO STANDALONE EXPRESS BACKEND ACTIVE\x1b[0m');
+    console.log(`\x1b[36m📡 Server URL:\x1b[0m    http://localhost:${PORT}`);
+    console.log(`\x1b[36m🏥 Health Check:\x1b[0m  http://localhost:${PORT}/api/health`);
+    console.log(`\x1b[36m🗄️  Database:\x1b[0m     ${dbType}`);
+    console.log('\x1b[35m' + '='.repeat(48) + '\x1b[0m\n');
+  });
+}
+
+startServer();
 
 export default app;

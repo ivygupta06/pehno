@@ -1,6 +1,6 @@
 import { User, StylePersona } from '../types/auth';
+import { apiUrl } from './api';
 
-const USERS_KEY = 'pehno_registered_users_v1';
 const SESSION_KEY = 'pehno_current_session_user_id_v1';
 const USER_CACHE_KEY = 'pehno_active_user_cache_v1';
 
@@ -12,10 +12,6 @@ export const DEFAULT_USER: User = {
   persona: 'romantic',
   createdAt: Date.now() - 86400000 * 7,
 };
-
-interface StoredUser extends User {
-  passwordHash: string;
-}
 
 export interface ServerActivity {
   id: string;
@@ -38,90 +34,13 @@ function getBrowserName(): string {
   return 'Browser';
 }
 
-function getStoredUsers(): StoredUser[] {
-  try {
-    const data = localStorage.getItem(USERS_KEY);
-    if (!data) {
-      const initial: StoredUser[] = [{
-        ...DEFAULT_USER,
-        passwordHash: 'password123',
-      }];
-      localStorage.setItem(USERS_KEY, JSON.stringify(initial));
-      return initial;
-    }
-    return JSON.parse(data);
-  } catch (e) {
-    return [];
-  }
-}
-
-function localSignUp(name: string, email: string, password: string, persona: StylePersona = 'romantic'): User {
-  const users = getStoredUsers();
-  const cleanEmail = email.toLowerCase().trim();
-  const existing = users.find(u => u.email.toLowerCase() === cleanEmail);
-  if (existing) {
-    throw new Error('An account with this email already exists.');
-  }
-
-  const avatarColors = ['#D5E5DA', '#FEF08A', '#E9D5FF', '#FCE7F3', '#BAE6FD', '#FED7AA'];
-  const avatarColor = avatarColors[users.length % avatarColors.length];
-
-  const newUser: StoredUser = {
-    id: `user-${Date.now()}`,
-    name: name.trim() || cleanEmail,
-    email: cleanEmail,
-    avatarColor,
-    persona,
-    createdAt: Date.now(),
-    passwordHash: password,
-  };
-
-  users.push(newUser);
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-  localStorage.setItem(SESSION_KEY, newUser.id);
-  localStorage.setItem(USER_CACHE_KEY, JSON.stringify(newUser));
-
-  const { passwordHash: _, ...user } = newUser;
-  return user;
-}
-
-function localSignIn(email: string, password: string): User {
-  const users = getStoredUsers();
-  const cleanEmail = email.toLowerCase().trim();
-  const found = users.find(u => u.email.toLowerCase() === cleanEmail);
-
-  if (!found) {
-    throw new Error('No account found with this email.');
-  }
-
-  if (found.passwordHash !== password && password !== 'password123') {
-    throw new Error('Incorrect password. Please check your credentials.');
-  }
-
-  localStorage.setItem(SESSION_KEY, found.id);
-  localStorage.setItem(USER_CACHE_KEY, JSON.stringify(found));
-  const { passwordHash: _, ...user } = found;
-  return user;
-}
-
 export function getCurrentUser(): User | null {
   try {
     const cached = localStorage.getItem(USER_CACHE_KEY);
     if (cached) {
       return JSON.parse(cached);
     }
-    const currentId = localStorage.getItem(SESSION_KEY);
-    if (!currentId) return null;
-    const users = getStoredUsers();
-    const found = users.find(u => u.id === currentId);
-    return found ? {
-      id: found.id,
-      name: found.name,
-      email: found.email,
-      avatarColor: found.avatarColor,
-      persona: found.persona,
-      createdAt: found.createdAt,
-    } : null;
+    return null;
   } catch (e) {
     return null;
   }
@@ -139,12 +58,12 @@ export async function signUp(
   const cleanPassword = password.trim();
 
   try {
-    const res = await fetch('/api/auth/signup', {
+    const res = await fetch(apiUrl('/api/auth/signup'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: cleanName, email: cleanEmail, password: cleanPassword, persona, browser }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.success) {
       throw new Error(data.error || 'Registration failed.');
     }
@@ -152,23 +71,12 @@ export async function signUp(
     localStorage.setItem(SESSION_KEY, user.id);
     localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user));
 
-    // Sync to local registered list
-    const stored = getStoredUsers();
-    const idx = stored.findIndex(u => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase());
-    if (idx >= 0) {
-      stored[idx] = { ...stored[idx], ...user, passwordHash: cleanPassword };
-    } else {
-      stored.push({ ...user, passwordHash: cleanPassword });
-    }
-    localStorage.setItem(USERS_KEY, JSON.stringify(stored));
-
     return user;
   } catch (err: any) {
-    if (err.message && err.message.includes('already exists')) {
-      throw err;
+    if (err instanceof TypeError) {
+      throw new Error('Cannot reach the Pehno backend. Start the app with npm run dev and try again.');
     }
-    console.warn('[AUTH] Falling back to local storage:', err.message);
-    return localSignUp(cleanName, cleanEmail, cleanPassword, persona);
+    throw err;
   }
 }
 
@@ -178,12 +86,12 @@ export async function signIn(email: string, password: string): Promise<User> {
   const cleanPassword = password.trim();
 
   try {
-    const res = await fetch('/api/auth/signin', {
+    const res = await fetch(apiUrl('/api/auth/signin'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: cleanEmail, password: cleanPassword, browser }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.success) {
       throw new Error(data.error || 'Authentication failed.');
     }
@@ -191,23 +99,12 @@ export async function signIn(email: string, password: string): Promise<User> {
     localStorage.setItem(SESSION_KEY, user.id);
     localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user));
 
-    // Sync to local registered list
-    const stored = getStoredUsers();
-    const idx = stored.findIndex(u => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase());
-    if (idx >= 0) {
-      stored[idx] = { ...stored[idx], ...user, passwordHash: cleanPassword };
-    } else {
-      stored.push({ ...user, passwordHash: cleanPassword });
-    }
-    localStorage.setItem(USERS_KEY, JSON.stringify(stored));
-
     return user;
   } catch (err: any) {
-    if (err.message && (err.message.includes('password') || err.message.includes('No account'))) {
-      throw err;
+    if (err instanceof TypeError) {
+      throw new Error('Cannot reach the Pehno backend. Start the app with npm run dev and try again.');
     }
-    console.warn('[AUTH] Falling back to local storage:', err.message);
-    return localSignIn(cleanEmail, cleanPassword);
+    throw err;
   }
 }
 
@@ -218,7 +115,7 @@ export function signOut(): void {
 
 export async function fetchServerUsers(): Promise<User[]> {
   try {
-    const res = await fetch('/api/auth/users');
+    const res = await fetch(apiUrl('/api/auth/users'));
     const data = await res.json();
     return data.users || [];
   } catch (e) {
@@ -228,7 +125,7 @@ export async function fetchServerUsers(): Promise<User[]> {
 
 export async function fetchServerActivity(): Promise<ServerActivity[]> {
   try {
-    const res = await fetch('/api/auth/activity');
+    const res = await fetch(apiUrl('/api/auth/activity'));
     const data = await res.json();
     return data.activity || [];
   } catch (e) {
@@ -238,7 +135,7 @@ export async function fetchServerActivity(): Promise<ServerActivity[]> {
 
 export async function deleteServerUser(userId: string): Promise<boolean> {
   try {
-    const res = await fetch(`/api/auth/users/${encodeURIComponent(userId)}`, { method: 'DELETE' });
+    const res = await fetch(apiUrl(`/api/auth/users/${encodeURIComponent(userId)}`), { method: 'DELETE' });
     const data = await res.json();
     return data.success === true;
   } catch (e) {
@@ -248,7 +145,7 @@ export async function deleteServerUser(userId: string): Promise<boolean> {
 
 export async function clearServerActivity(): Promise<boolean> {
   try {
-    const res = await fetch('/api/auth/activity/clear', { method: 'POST' });
+    const res = await fetch(apiUrl('/api/auth/activity/clear'), { method: 'POST' });
     const data = await res.json();
     return data.success === true;
   } catch (e) {

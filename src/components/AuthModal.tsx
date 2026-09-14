@@ -41,7 +41,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       if (tab === 'signup') {
         if (!cleanName) throw new Error('Please enter your name.');
         if (!cleanEmail) throw new Error('Please enter your email.');
-        if (cleanPassword.length < 4) throw new Error('Password must be at least 4 characters.');
+        if (cleanPassword.length < 8) throw new Error('Password must be at least 8 characters.');
         const user = await signUp(cleanName, cleanEmail, cleanPassword, persona);
         onSuccess(user);
         onClose();
@@ -170,6 +170,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                   placeholder="e.g. Your Name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  autoComplete="name"
+                  required
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-pastel-sand text-xs text-pastel-charcoal focus:outline-none focus:border-pastel-sage-medium"
                 />
               </div>
@@ -182,11 +184,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-pastel-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="email"
+                <input
+                  type="email"
                 placeholder="username@gmail.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  required
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-pastel-sand text-xs text-pastel-charcoal focus:outline-none focus:border-pastel-sage-medium"
               />
             </div>
@@ -198,11 +202,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 text-pastel-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="password"
+                <input
+                  type="password"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={tab === 'signup' ? 'new-password' : 'current-password'}
+                  required
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-pastel-sand text-xs text-pastel-charcoal focus:outline-none focus:border-pastel-sage-medium"
               />
             </div>

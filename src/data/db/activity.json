@@ -1,5 +1,59 @@
 [
   {
+    "id": "act-1789367184898-ozkl",
+    "timestamp": 1789367184898,
+    "type": "REGISTER",
+    "email": "aadyajain@gmail.com",
+    "userName": "Aadya",
+    "browser": "Safari",
+    "details": "Account registered with minimalist style"
+  },
+  {
+    "id": "act-1789367132688-o6fz",
+    "timestamp": 1789367132688,
+    "type": "REGISTER",
+    "email": "hersheysmilkshake@gmail.com",
+    "userName": "Saumya",
+    "browser": "Safari",
+    "details": "Account registered with romantic style"
+  },
+  {
+    "id": "act-1789367097919-mrix",
+    "timestamp": 1789367097919,
+    "type": "USER_DELETE",
+    "email": "ce79fbb1-e23e-414f-91b5-3cee22aaeca7",
+    "userName": "",
+    "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.2 Safari/605.1.15",
+    "details": "Deleted account ce79fbb1-e23e-414f-91b5-3cee22aaeca7"
+  },
+  {
+    "id": "act-1789367079022-vmbp",
+    "timestamp": 1789367079022,
+    "type": "LOGIN",
+    "email": "ivygupta06@gmail.com",
+    "userName": "ivygupta06@gmail.com",
+    "browser": "Safari",
+    "details": "Logged in successfully from Safari"
+  },
+  {
+    "id": "act-1789366827590-fxz6",
+    "timestamp": 1789366827590,
+    "type": "LOGIN",
+    "email": "hersheysmilkshake@gmail.com",
+    "userName": "Saumya Maurya",
+    "browser": "Safari",
+    "details": "Logged in successfully from Safari"
+  },
+  {
+    "id": "act-1789366818101-xjrj",
+    "timestamp": 1789366818101,
+    "type": "REGISTER",
+    "email": "hersheysmilkshake@gmail.com",
+    "userName": "Saumya Maurya",
+    "browser": "Safari",
+    "details": "Account registered with romantic style"
+  },
+  {
     "id": "act-1789362852437-y9xt",
     "timestamp": 1789362852437,
     "type": "WARDROBE_SAVE",

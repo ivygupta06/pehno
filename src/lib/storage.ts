@@ -1,6 +1,7 @@
 import { GarmentItem, Outfit } from '../types/wardrobe';
 import { INITIAL_WARDROBE } from '../data/initialWardrobe';
 import { formatGarmentName } from './colorTheory';
+import { apiUrl } from './api';
 
 const WARDROBE_KEY_PREFIX = 'pehno_wardrobe_items_';
 const FAVORITES_KEY_PREFIX = 'pehno_favorite_outfits_';
@@ -54,19 +55,22 @@ export function loadWardrobe(userId?: string | null): GarmentItem[] {
     const data = localStorage.getItem(key);
     let items: GarmentItem[] = [];
     if (!data) {
-      // If new account, copy existing closet or seed initial
-      const legacyData = localStorage.getItem('pehno_wardrobe_items_v1');
-      if (legacyData) {
-        try {
-          const parsed = JSON.parse(legacyData);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            items = parsed;
-          }
-        } catch (e) {}
+      if (!userId) {
+        // Unauthenticated guest: fall back to legacy shared key or seed initial wardrobe
+        const legacyData = localStorage.getItem('pehno_wardrobe_items_v1');
+        if (legacyData) {
+          try {
+            const parsed = JSON.parse(legacyData);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              items = parsed;
+            }
+          } catch (e) {}
+        }
+        if (items.length === 0) {
+          items = INITIAL_WARDROBE;
+        }
       }
-      if (items.length === 0) {
-        items = INITIAL_WARDROBE;
-      }
+      // Authenticated new user: start with a fresh empty wardrobe (items stays [])
     } else {
       items = JSON.parse(data);
     }
@@ -79,10 +83,10 @@ export function loadWardrobe(userId?: string | null): GarmentItem[] {
       }
       return cleaned;
     }
-    return INITIAL_WARDROBE;
+    return [];
   } catch (e) {
     console.error('Error loading wardrobe from localStorage', e);
-    return INITIAL_WARDROBE;
+    return [];
   }
 }
 
@@ -94,7 +98,7 @@ export function saveWardrobe(items: GarmentItem[], userId?: string | null): void
       localStorage.setItem('pehno_wardrobe_items_v1', JSON.stringify(items));
     }
     // Background sync to local backend database
-    fetch('/api/wardrobe/save', {
+    fetch(apiUrl('/api/wardrobe/save'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -114,7 +118,7 @@ export async function syncWardrobeWithServer(userId?: string | null): Promise<{
   favorites?: Outfit[];
 } | null> {
   try {
-    const res = await fetch(`/api/wardrobe/get?userId=${encodeURIComponent(userId || 'default')}`);
+    const res = await fetch(apiUrl(`/api/wardrobe/get?userId=${encodeURIComponent(userId || 'default')}`));
     if (!res.ok) return null;
     const data = await res.json();
     if (data.success && Array.isArray(data.wardrobe) && data.wardrobe.length > 0) {
@@ -239,7 +243,7 @@ export async function pushToSharedServer(
   favorites: Outfit[]
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const res = await fetch('/api/wardrobe/shared', {
+    const res = await fetch(apiUrl('/api/wardrobe/shared'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -264,7 +268,7 @@ export async function pullFromSharedServer(): Promise<{
   error?: string;
 }> {
   try {
-    const res = await fetch('/api/wardrobe/shared');
+    const res = await fetch(apiUrl('/api/wardrobe/shared'));
     if (!res.ok) throw new Error(`Server returned status ${res.status}`);
     const data = await res.json();
     if (!data || data.exists === false || !Array.isArray(data.wardrobe)) {

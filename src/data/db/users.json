@@ -13,10 +13,32 @@
     "id": "user-ivy-gmail",
     "name": "ivygupta06@gmail.com",
     "email": "ivygupta06@gmail.com",
-    "passwordHash": "password123",
+    "passwordHash": "scrypt$a7ca925b41d662229e36db66eabe3048$35a5e11949635db97eeb7e76d4542b163920cc8fe57a6c7c45f08047148507d5b2a0b21ec8e7e95e67ccf21d16dd273daa20a4adb32439f7381225508cf5326d",
     "avatarColor": "#FEF08A",
     "persona": "romantic",
     "createdAt": 1789315600000,
-    "lastLoginAt": 1789315600000
+    "lastLoginAt": 1789367079020
+  },
+  {
+    "id": "931f26f0-73b1-413b-a21b-3ba3b3856f8e",
+    "name": "Saumya",
+    "email": "hersheysmilkshake@gmail.com",
+    "passwordHash": "scrypt$f2964d815773ae747b3456dc2c7c8ccb$13c64498f28679756612c2bc1e18a2889216ca1adaab62dd03d1fa805892e2ba15816914a6e810ebe3ff6c48bb47f87107d447e3bd5cc204b25f7b2aeeb23ca3",
+    "avatarColor": "#E9D5FF",
+    "persona": "romantic",
+    "role": "user",
+    "createdAt": 1789367132687,
+    "lastLoginAt": 1789367132687
+  },
+  {
+    "id": "1cfe8243-db02-4056-af60-81feb640a533",
+    "name": "Aadya",
+    "email": "aadyajain@gmail.com",
+    "passwordHash": "scrypt$faae6d45c4a226dd2bf6eb53bc68ec5a$a3e289070dbd667182eb281b8d2cdbed8bb14bce41228cc437a69744f0fe5ccdb55db1fac9b20da9276d2cd90efa34bc6c0199c57a62ff6e2e7c073fb6b73c6d",
+    "avatarColor": "#FCE7F3",
+    "persona": "minimalist",
+    "role": "user",
+    "createdAt": 1789367184897,
+    "lastLoginAt": 1789367184897
   }
 ]

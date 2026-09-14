@@ -833,7 +833,7 @@ Return a valid JSON object strictly matching this schema:
     {
       "name": "MAX 3 WORDS: 1st word color (e.g. Black Net Top, Brown Layer Top, Red Slip Dress, Blue Straight Jeans, Black Strappy Heels)",
       "category": "tops" | "bottoms" | "outerwear" | "dresses" | "shoes" | "bags" | "accessories",
-      "subcategory": "sundress" | "slip-dress" | "midi-dress" | "mini-dress" | "maxi-dress" | "wrap-dress" | "bodycon" | "crop-top" | "blouse" | "button-down" | "knit-sweater" | "tank-top" | "tube-top" | "t-shirt" | "jeans" | "wide-leg-trousers" | "tailored-pants" | "mini-skirt" | "midi-skirt" | "blazer" | "sneakers" | "loafers" | "heels" | "mules" | "tote-bag" | "shoulder-bag" | "sunglasses",
+      "subcategory": "sundress" | "slip-dress" | "midi-dress" | "mini-dress" | "maxi-dress" | "wrap-dress" | "bodycon" | "crop-top" | "blouse" | "button-down" | "knit-sweater" | "tank-top" | "tube-top" | "t-shirt" | "jeans" | "shorts" | "wide-leg-trousers" | "tailored-pants" | "cargo-pants" | "linen-pants" | "mini-skirt" | "midi-skirt" | "blazer" | "denim-jacket" | "leather-jacket" | "sneakers" | "loafers" | "heels" | "mules" | "sandals" | "boots" | "tote-bag" | "shoulder-bag" | "crossbody" | "sunglasses" | "belt" | "necklace" | "scarf",
       "colorName": "Precise fashion color name (e.g. Crimson Red, Navy Blue, Buttercream Yellow, Crisp White, Slate Grey, Vintage Indigo)",
       "colorHex": "#RRGGBB hex code representing dominant fabric hue",
       "colorTone": "pastel" | "neutral" | "earthy" | "vibrant" | "dark",
