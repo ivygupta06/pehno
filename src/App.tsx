@@ -18,6 +18,7 @@ import { ClosetView } from './components/ClosetView';
 import { StylistView } from './components/StylistView';
 import { OutfitStudio } from './components/OutfitStudio';
 import { FavoritesView } from './components/FavoritesView';
+import { ColorWheelView } from './components/ColorWheelView';
 import { UploadModal } from './components/UploadModal';
 import { ItemDetailModal } from './components/ItemDetailModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -26,7 +27,7 @@ import { DuplicatesModal } from './components/DuplicatesModal';
 import { BackendModal } from './components/BackendModal';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'closet' | 'stylist' | 'studio' | 'favorites'>('closet');
+  const [activeTab, setActiveTab] = useState<'closet' | 'stylist' | 'studio' | 'favorites' | 'spin'>('closet');
   const [wardrobe, setWardrobe] = useState<GarmentItem[]>([]);
   const [favorites, setFavorites] = useState<Outfit[]>([]);
   const [settings, setSettings] = useState<UserSettings>({ geminiApiKey: '' });
@@ -240,6 +241,16 @@ export const App: React.FC = () => {
             onUpdateFavorite={handleUpdateFavorite}
             onNavigateToStylist={() => setActiveTab('stylist')}
             onViewItemDetail={(g) => setItemDetail(g)}
+          />
+        )}
+
+        {activeTab === 'spin' && (
+          <ColorWheelView
+            wardrobe={wardrobe}
+            favorites={favorites}
+            onSaveFavorite={handleSaveOutfitToFavorites}
+            onSelectGarmentToStyle={handleSelectGarmentToStyle}
+            onNavigateToStylist={() => setActiveTab('stylist')}
           />
         )}
       </main>

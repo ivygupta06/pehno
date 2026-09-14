@@ -857,7 +857,6 @@ Return ONLY valid JSON. No markdown code blocks, no explanation.`;
 
   const modelsToTry = [
     'gemini-3.5-flash-lite',
-    'gemini-3.6-flash',
     'gemini-2.0-flash',
     'gemini-1.5-flash',
     'gemini-1.5-pro',

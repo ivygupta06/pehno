@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Sparkles, Heart, Shirt, Palette, Settings, User as UserIcon, LogOut, Key, Server } from 'lucide-react';
+import { Sparkles, Heart, Shirt, Palette, Settings, User as UserIcon, LogOut, Key, Server, Dices } from 'lucide-react';
 import { User } from '../types/auth';
 import { isCreatorUser } from '../lib/auth';
 
 interface NavbarProps {
-  activeTab: 'closet' | 'stylist' | 'studio' | 'favorites';
-  setActiveTab: (tab: 'closet' | 'stylist' | 'studio' | 'favorites') => void;
+  activeTab: 'closet' | 'stylist' | 'studio' | 'favorites' | 'spin';
+  setActiveTab: (tab: 'closet' | 'stylist' | 'studio' | 'favorites' | 'spin') => void;
   closetCount: number;
   favoritesCount: number;
   onOpenSettings: () => void;
@@ -98,6 +98,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Palette className="w-4 h-4 text-purple-500" />
               <span>Mix & Match</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('spin')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition-all ${
+                activeTab === 'spin'
+                  ? 'bg-white text-pastel-charcoal shadow-soft'
+                  : 'text-pastel-charcoal/70 hover:text-pastel-charcoal hover:bg-white/40'
+              }`}
+            >
+              <Dices className="w-4 h-4 text-amber-500" />
+              <span>Spin Wheel</span>
             </button>
 
             <button

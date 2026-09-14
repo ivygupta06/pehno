@@ -30,7 +30,6 @@ interface GeminiOutfitResponse {
 
 const GEMINI_MODELS = [
   'gemini-3.5-flash-lite',
-  'gemini-3.6-flash',
   'gemini-2.0-flash',
   'gemini-1.5-flash',
   'gemini-1.5-pro',
@@ -74,7 +73,7 @@ async function callGeminiText(apiKey: string, prompt: string, maxTokens?: number
           msg = parsed.error?.message || msg;
         } catch (e) {}
 
-        if (msg.includes('OAuth 2') || msg.includes('authentication credential')) {
+        if (msg.includes('OAuth 2') || msg.includes('authentication') || msg.includes('API key') || msg.includes('INVALID_ARGUMENT')) {
           msg = 'Invalid Google Gemini API key. Please generate a free key from Google AI Studio (https://aistudio.google.com/app/apikey) starting with "AIzaSy".';
         }
         throw new Error(msg);
@@ -91,8 +90,8 @@ async function callGeminiText(apiKey: string, prompt: string, maxTokens?: number
       return rawText;
     } catch (err: any) {
       lastError = err;
-      // If auth credential error, report immediately
-      if (err.message && (err.message.includes('AIzaSy') || err.message.includes('Invalid Google Gemini API key'))) {
+      // If auth credential or API key error, stop loop immediately
+      if (err.message && (err.message.includes('API key') || err.message.includes('AIzaSy') || err.message.includes('Invalid'))) {
         throw err;
       }
       // Otherwise try next fallback model

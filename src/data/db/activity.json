@@ -1,5 +1,14 @@
 [
   {
+    "id": "act-1789388567417-tc15",
+    "timestamp": 1789388567417,
+    "type": "LOGIN",
+    "email": "ivygupta06@gmail.com",
+    "userName": "ivygupta06@gmail.com",
+    "browser": "Safari",
+    "details": "Logged in from Safari"
+  },
+  {
     "id": "act-1789367184898-ozkl",
     "timestamp": 1789367184898,
     "type": "REGISTER",
