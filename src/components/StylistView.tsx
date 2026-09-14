@@ -71,7 +71,7 @@ export const StylistView: React.FC<StylistViewProps> = ({
 
     try {
       if (hasApiKey) {
-        // Real Gemini 1.5 Flash Call with RAG Style Profile injection
+        // Gemini 3.6 Flash Call with RAG Style Profile injection
         if (activeMode === 'occasion') {
           const geminiFits = await generateOutfitsWithGemini(wardrobe, selectedOccasion, geminiApiKey!, profile);
           setGeneratedOutfits(geminiFits);
