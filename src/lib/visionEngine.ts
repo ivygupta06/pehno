@@ -871,16 +871,65 @@ Return ONLY valid JSON. No markdown code blocks, no explanation.`;
   const lastBrace = cleanText.lastIndexOf('}');
   if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
     cleanText = cleanText.substring(firstBrace, lastBrace + 1);
+  } else if (firstBrace !== -1) {
+    cleanText = cleanText.substring(firstBrace);
   }
+  cleanText = cleanText.replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'");
 
   let parsed: AnalysisResponse;
   try {
     parsed = JSON.parse(cleanText);
   } catch {
-    const sanitized = cleanText
-      .replace(/,\s*([}\]])/g, '$1')
-      .replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F]/g, '');
-    parsed = JSON.parse(sanitized);
+    let inString = false;
+    let escaped = false;
+    let out = '';
+    const stack: string[] = [];
+
+    for (let i = 0; i < cleanText.length; i++) {
+      const c = cleanText[i];
+      if (escaped) {
+        out += c;
+        escaped = false;
+        continue;
+      }
+      if (c === '\\') {
+        escaped = true;
+        out += c;
+        continue;
+      }
+      if (c === '"') {
+        inString = !inString;
+        out += c;
+        continue;
+      }
+      if (inString) {
+        if (c === '\n' || c === '\r') {
+          out += '\\n';
+        } else if (c === '\t') {
+          out += '\\t';
+        } else {
+          out += c;
+        }
+      } else {
+        if (c === '{' || c === '[') {
+          stack.push(c);
+        } else if (c === '}') {
+          if (stack.length && stack[stack.length - 1] === '{') stack.pop();
+        } else if (c === ']') {
+          if (stack.length && stack[stack.length - 1] === '[') stack.pop();
+        }
+        out += c;
+      }
+    }
+    if (inString) out += '"';
+    out = out.replace(/,\s*([}\]])/g, '$1');
+    while (stack.length > 0) {
+      const open = stack.pop();
+      if (open === '{') out += '}';
+      else if (open === '[') out += ']';
+    }
+    out = out.replace(/,\s*([}\]])/g, '$1');
+    parsed = JSON.parse(out);
   }
   // Save an item-specific crop whenever the model supplies a usable box.
   // This is what prevents a Brown Tank card from showing the entire flat lay.

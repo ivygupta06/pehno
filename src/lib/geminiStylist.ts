@@ -51,28 +51,89 @@ async function callGeminiText(_apiKey: string, prompt: string, maxTokens?: numbe
 
 /**
  * Safely parse Gemini JSON responses, handling markdown code fences,
- * leading/trailing commentary, and common formatting artifacts.
+ * unescaped string newlines, smart quotes, unterminated strings, and missing brackets.
  */
 function parseGeminiJsonResponse<T>(rawText: string): T {
   let text = (rawText || '').trim();
   // Remove markdown code fences if present (```json ... ``` or ``` ...)
   text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
 
-  // Extract outermost json object
+  // Extract from first opening brace
   const firstBrace = text.indexOf('{');
   const lastBrace = text.lastIndexOf('}');
   if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
     text = text.substring(firstBrace, lastBrace + 1);
+  } else if (firstBrace !== -1) {
+    text = text.substring(firstBrace);
   }
+
+  // Replace curly / smart quotes that break JSON syntax
+  text = text.replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'");
 
   try {
     return JSON.parse(text);
   } catch (err: any) {
-    // Attempt cleaning trailing commas before closing braces/brackets and unescaped control characters
-    const cleaned = text
-      .replace(/,\s*([}\]])/g, '$1')
-      .replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F]/g, '');
-    return JSON.parse(cleaned);
+    // Advanced state machine parser to repair unescaped newlines and close open strings/brackets
+    let inString = false;
+    let escaped = false;
+    let out = '';
+    const stack: string[] = [];
+
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (escaped) {
+        out += c;
+        escaped = false;
+        continue;
+      }
+      if (c === '\\') {
+        escaped = true;
+        out += c;
+        continue;
+      }
+      if (c === '"') {
+        inString = !inString;
+        out += c;
+        continue;
+      }
+      if (inString) {
+        if (c === '\n' || c === '\r') {
+          out += '\\n';
+        } else if (c === '\t') {
+          out += '\\t';
+        } else {
+          out += c;
+        }
+      } else {
+        if (c === '{' || c === '[') {
+          stack.push(c);
+        } else if (c === '}') {
+          if (stack.length && stack[stack.length - 1] === '{') stack.pop();
+        } else if (c === ']') {
+          if (stack.length && stack[stack.length - 1] === '[') stack.pop();
+        }
+        out += c;
+      }
+    }
+
+    if (inString) {
+      out += '"';
+    }
+
+    // Clean trailing commas before closing braces/brackets
+    out = out.replace(/,\s*([}\]])/g, '$1');
+
+    // Close remaining open brackets and braces in reverse order
+    while (stack.length > 0) {
+      const open = stack.pop();
+      if (open === '{') out += '}';
+      else if (open === '[') out += ']';
+    }
+
+    // Clean any trailing commas again
+    out = out.replace(/,\s*([}\]])/g, '$1');
+
+    return JSON.parse(out);
   }
 }
 
