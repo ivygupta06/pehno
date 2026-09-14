@@ -155,17 +155,19 @@ export const StylistView: React.FC<StylistViewProps> = ({
           </div>
         </div>
 
-        <button
-          onClick={onOpenSettings}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold shadow-soft hover:shadow-soft-lg hover:scale-102 transition-all flex-shrink-0 ${
-            hasApiKey
-              ? 'bg-white text-emerald-800 border border-emerald-300'
-              : 'bg-pastel-sage-dark text-white'
-          }`}
-        >
-          <Key className="w-3.5 h-3.5" />
-          <span>{hasApiKey ? 'Manage Key' : 'Connect Free Gemini Key'}</span>
-        </button>
+        {onOpenSettings && (
+          <button
+            onClick={onOpenSettings}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold shadow-soft hover:shadow-soft-lg hover:scale-102 transition-all flex-shrink-0 ${
+              hasApiKey
+                ? 'bg-white text-emerald-800 border border-emerald-300'
+                : 'bg-pastel-sage-dark text-white'
+            }`}
+          >
+            <Key className="w-3.5 h-3.5" />
+            <span>{hasApiKey ? 'Manage Key' : 'Connect Free Gemini Key'}</span>
+          </button>
+        )}
       </div>
 
       {/* Header Banner */}

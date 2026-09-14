@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Heart, Shirt, Palette, Settings, User as UserIcon, LogOut, Key, Server, Dices } from 'lucide-react';
+import { Sparkles, Heart, Shirt, Palette, User as UserIcon, LogOut, Server, Dices } from 'lucide-react';
 import { User } from '../types/auth';
 import { isCreatorUser } from '../lib/auth';
 
@@ -8,7 +8,7 @@ interface NavbarProps {
   setActiveTab: (tab: 'closet' | 'stylist' | 'studio' | 'favorites' | 'spin') => void;
   closetCount: number;
   favoritesCount: number;
-  onOpenSettings: () => void;
+  onOpenSettings?: () => void;
   onOpenBackend: () => void;
   currentUser: User | null;
   onOpenAuth: () => void;
@@ -21,7 +21,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   closetCount,
   favoritesCount,
-  onOpenSettings,
   onOpenBackend,
   currentUser,
   onOpenAuth,
@@ -133,19 +132,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Right Action Area */}
           <div className="flex items-center gap-2.5">
             
-            {/* AI Status Badge */}
-            <button
-              onClick={onOpenSettings}
+            {/* AI Status Badge (Static Indicator) */}
+            <div
               className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all ${
                 hasGeminiKey
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                  : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : 'bg-amber-50 text-amber-800 border-amber-200'
               }`}
-              title="Click to configure Gemini API Key"
             >
               <span className={`w-2 h-2 rounded-full ${hasGeminiKey ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-              <span>{hasGeminiKey ? 'Gemini AI Active' : 'Connect Gemini AI'}</span>
-            </button>
+              <span>{hasGeminiKey ? 'Gemini AI Active' : 'Color Theory Active'}</span>
+            </div>
 
             {/* User Profile / Auth Button */}
             {currentUser ? (
@@ -197,17 +194,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <button
                       onClick={() => {
                         setProfileDropdown(false);
-                        onOpenSettings();
-                      }}
-                      className="w-full text-left px-2 py-1.5 rounded-xl text-xs text-pastel-charcoal hover:bg-pastel-cream-100 flex items-center gap-2"
-                    >
-                      <Key className="w-3.5 h-3.5 text-pastel-muted" />
-                      <span>API Settings</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setProfileDropdown(false);
                         onOpenAuth();
                       }}
                       className="w-full text-left px-2 py-1.5 rounded-xl text-xs text-pastel-charcoal hover:bg-pastel-cream-100 flex items-center gap-2"
@@ -250,15 +236,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="hidden sm:inline text-[11px] font-bold">Backend</span>
               </button>
             )}
-
-            {/* Settings Icon */}
-            <button
-              onClick={onOpenSettings}
-              title="Settings & AI Model"
-              className="p-2.5 rounded-full text-pastel-charcoal/70 hover:text-pastel-charcoal hover:bg-pastel-cream-200/80 transition-colors"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
           </div>
         </div>
 
