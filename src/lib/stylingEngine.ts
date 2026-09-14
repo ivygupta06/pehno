@@ -475,10 +475,10 @@ export function generateOccasionOutfits(wardrobe: GarmentItem[], occasion: Occas
       ? shoes.find(s => s.occasions.includes(occasion)) || shoes[idx % shoes.length]
       : undefined;
 
-    // For dresses: prioritize matching heels or elegant footwear, never force clunky casual shoes
+    // For dresses: prioritize matching heels/dress shoes if available in closet, but KEEP sneakers/flats if available! Never leave shoe undefined if closet has shoes!
     if (dress) {
       const dressHeels = shoes.filter(isHeelOrDressShoe);
-      shoe = dressHeels.length > 0 ? dressHeels[idx % dressHeels.length] : undefined;
+      shoe = dressHeels.length > 0 ? dressHeels[idx % dressHeels.length] : (shoes.length > 0 ? shoes[idx % shoes.length] : undefined);
     }
 
     // Bag is optional — do NOT force bag on every fit unless office or 40% probability
@@ -493,10 +493,20 @@ export function generateOccasionOutfits(wardrobe: GarmentItem[], occasion: Occas
     const itemsToEvaluate = [top, bottom, dress, selectedOuterwear, shoe, bag, accessory];
     const { score, harmonyType, reasons } = calculateCompatibilityScore(itemsToEvaluate, occasion);
 
-    // Always guarantee EXACTLY 2 complementary external recommendations
-    const externalSuggestions: ExternalSuggestion[] = EXTERNAL_SUGGESTION_POOL
+    // Pick 1-2 complementary external suggestions for missing items
+    const rawSuggestions: ExternalSuggestion[] = EXTERNAL_SUGGESTION_POOL
       .filter((_, i) => (i + idx) % 2 === 0)
       .slice(0, 2);
+
+    // CRITICAL: Filter out external suggestions for categories ALREADY present in the closet outfit!
+    const externalSuggestions = rawSuggestions.filter(s => {
+      if (s.category === 'shoes' && shoe) return false;
+      if (s.category === 'bags' && bag) return false;
+      if (s.category === 'tops' && top) return false;
+      if (s.category === 'bottoms' && bottom) return false;
+      if (s.category === 'outerwear' && (selectedOuterwear || top)) return false;
+      return true;
+    });
 
     // If styling a dress and no matching heels are in closet, suggest buying options for heels!
     if (dress && !shoe) {

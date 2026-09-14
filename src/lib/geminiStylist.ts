@@ -311,101 +311,64 @@ Return ONLY valid JSON with no markdown backticks or commentary.`;
       const shoesInWardrobe = wardrobe.filter(i => i.category === 'shoes');
       if (shoesInWardrobe.length > 0) shoes = shoesInWardrobe[idx % shoesInWardrobe.length];
     }
-    if (!bag) {
-      const bagsInWardrobe = wardrobe.filter(i => i.category === 'bags');
-      if (bagsInWardrobe.length > 0) bag = bagsInWardrobe[idx % bagsInWardrobe.length];
-    }
 
-    // If styling a dress: check footwear and bag recommendations
     if (dress) {
-      if (shoes && !isHeelOrDressShoe(shoes)) {
-        shoes = undefined; // Do NOT force casual sneakers on an elegant dress!
-      }
-      const hasHeelSugg = externalSuggestions.some(s => s.category === 'shoes');
-      if (!shoes && !hasHeelSugg) {
-        const dressLower = `${dress.name} ${dress.colorName}`.toLowerCase();
-        let heelColor = 'Black';
-        let heelHex = '#18181B';
-        let heelName = 'Black Strappy Heels';
-
-        if (dressLower.includes('white') || dressLower.includes('cream') || dressLower.includes('yellow') || dress.colorTone === 'pastel') {
-          heelColor = 'Nude';
-          heelHex = '#E7D7C9';
-          heelName = 'Nude Block Mules';
-        } else if (dressLower.includes('red') || dressLower.includes('pink') || dressLower.includes('rose') || dressLower.includes('wine')) {
-          heelColor = 'Nude';
-          heelHex = '#E7D7C9';
-          heelName = 'Nude Strappy Heels';
-        } else if (dress.colorTone === 'earthy' || dressLower.includes('brown')) {
-          heelColor = 'Gold';
-          heelHex = '#D4AF37';
-          heelName = 'Gold Strappy Heels';
-        }
-
-        externalSuggestions.unshift({
-          id: `gemini-ext-heels-${Date.now()}-${idx}`,
-          category: 'shoes',
-          name: heelName,
-          color: heelColor,
-          colorHex: heelHex,
-          reasoning: `No matching heels in closet. Complete your ${dress.name} with ${heelColor.toLowerCase()} strappy heels for an elegant silhouette.`,
-          searchQuery: `${heelName.toLowerCase()} shopping`,
-          vibe: o.vibe || 'chic',
-        });
-      }
-
-      // CRITICAL: With a dress, also ALWAYS recommend a matching bag if none in closet!
-      const hasBagSugg = externalSuggestions.some(s => s.category === 'bags');
-      if (!bag && !hasBagSugg) {
-        let bagName = 'Cream Butter Leather Bag';
-        let bagColor = 'Oat Cream';
-        let bagHex = '#F4EFEA';
-        let bagQuery = 'cream butter leather shoulder bag';
-        let bagReason = `No bags in closet. Pair your ${dress.name} with a chic neutral shoulder bag.`;
-
-        if (occasion === 'office') {
-          bagName = 'Black Leather Tote Bag';
-          bagColor = 'Black';
-          bagHex = '#18181B';
-          bagQuery = 'structured black leather work tote bag';
-          bagReason = `No bags in closet. A structured leather tote bag brings executive polish to your ${dress.name}.`;
-        } else if (occasion === 'date' || occasion === 'party') {
-          bagName = 'Black Satin Baguette Bag';
-          bagColor = 'Black';
-          bagHex = '#18181B';
-          bagQuery = 'minimalist black evening baguette shoulder bag';
-          bagReason = `No bags in closet. A sleek evening shoulder bag completes your ${dress.name} for dinner and drinks.`;
-        } else if (occasion === 'brunch' || occasion === 'weekend') {
-          bagName = 'Woven Raffia Shoulder Bag';
-          bagColor = 'Natural Oat';
-          bagHex = '#E7D7C9';
-          bagQuery = 'woven raffia crescent shoulder bag';
-          bagReason = `No bags in closet. Tactile woven texture effortlessly softens your ${dress.name} for the weekend.`;
-        }
-
-        externalSuggestions.push({
-          id: `gemini-ext-bag-${Date.now()}-${idx}`,
-          category: 'bags',
-          name: bagName,
-          color: bagColor,
-          colorHex: bagHex,
-          reasoning: bagReason,
-          searchQuery: bagQuery,
-          vibe: o.vibe || 'chic',
-        });
+      // If dress is styled, prioritize dressy heels/mules if present in closet, but KEEP sneakers/flats if that is what closet has!
+      const dressHeels = wardrobe.filter(i => i.category === 'shoes' && isHeelOrDressShoe(i));
+      if (dressHeels.length > 0) {
+        shoes = dressHeels[idx % dressHeels.length];
       }
     }
 
     // Outerwear intelligence: Do NOT force outerwear over normal tops or tops that don't need it
     let outerwear = shouldIncludeOuterwear(top, dress, rawOuterwear, occasion, idx) ? rawOuterwear : undefined;
-    let filteredExternal = externalSuggestions;
     if (top) {
       outerwear = undefined; // STRICT: normal tops never have outerwear
-      filteredExternal = externalSuggestions.filter(s => s.category !== 'outerwear');
+    }
+
+    // CRITICAL: Filter out external suggestions for categories ALREADY present in the closet outfit!
+    let filteredExternal = externalSuggestions.filter(s => {
+      if (s.category === 'shoes' && shoes) return false;
+      if (s.category === 'bags' && bag) return false;
+      if (s.category === 'tops' && top) return false;
+      if (s.category === 'bottoms' && bottom) return false;
+      if (s.category === 'outerwear' && (outerwear || top)) return false;
+      return true;
+    });
+
+    // Guarantee EXACTLY 2 high-fashion accessory recommendations for categories missing in the outfit
+    const accessoryPool: ExternalSuggestion[] = [
+      {
+        id: `gemini-ext-glasses-${Date.now()}-${idx}`,
+        category: 'accessories',
+        name: 'Tortoiseshell Oval Sunglasses',
+        color: 'Warm Terracotta',
+        colorHex: '#B45309',
+        reasoning: 'Adds a chic, sun-drenched accent to frame the face and elevate daytime proportions.',
+        searchQuery: 'tortoiseshell oval sunglasses women',
+        vibe: o.vibe || 'chic',
+      },
+      {
+        id: `gemini-ext-hoops-${Date.now()}-${idx}`,
+        category: 'accessories',
+        name: 'Gold Chunky Hoop Earrings',
+        color: 'Polished Gold',
+        colorHex: '#D4AF37',
+        reasoning: 'Warm metallic shimmer brings instant intentional polish to the neckline.',
+        searchQuery: 'gold chunky hoop earrings 18k',
+        vibe: o.vibe || 'chic',
+      },
+    ];
+
+    for (const accItem of accessoryPool) {
+      if (filteredExternal.length >= 2) break;
+      if (!filteredExternal.some((s) => s.name === accItem.name || s.category === accItem.category)) {
+        filteredExternal.push(accItem);
+      }
     }
 
     // Format all external suggestions to be strictly max 3 words
-    const formattedExternal: ExternalSuggestion[] = filteredExternal.map(s => ({
+    const formattedExternal: ExternalSuggestion[] = filteredExternal.slice(0, 2).map(s => ({
       ...s,
       name: formatGarmentName(s.name, s.color, s.category),
     }));
