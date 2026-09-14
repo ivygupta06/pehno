@@ -78,6 +78,58 @@ const COLOR_STORIES: ColorStoryOption[] = [
   },
 ];
 
+function matchesColorStory(item: GarmentItem, storyId: string): boolean {
+  const colorName = (item.colorName || '').toLowerCase();
+  const name = (item.name || '').toLowerCase();
+  const hex = (item.colorHex || '').toLowerCase();
+  const tags = (item.tags || []).map(t => t.toLowerCase()).join(' ');
+
+  // Only match on color-related fields: colorName, item name, and tags
+  // Deliberately NOT matching on material, subcategory, or category
+  const fullColorText = `${colorName} ${name} ${tags}`;
+
+  switch (storyId) {
+    case 'cream':
+      return /\b(cream|beige|oat|ecru|sand|camel|khaki|taupe|nude|ivory|biscuit|off-white)\b/i.test(fullColorText) ||
+             ['#faf9f6', '#f4efea', '#f7f3e9', '#f5ebe0', '#fffdf0', '#fff8dc'].includes(hex);
+
+    case 'yellow':
+      return /\b(yellow|butter|gold|mustard|lemon|honey|canary|marigold|sunflower)\b/i.test(fullColorText) ||
+             ['#fef08a', '#facc15', '#fde047', '#eab308', '#f59e0b'].includes(hex);
+
+    case 'blue':
+      return /\b(blue|denim|navy|sky|cobalt|indigo|azure|cyan|aqua)\b/i.test(fullColorText) ||
+             ['#bae6fd', '#7ea6e0', '#1e40af', '#93c5fd', '#3b82f6', '#1d4ed8'].includes(hex);
+
+    case 'coral':
+    case 'red':
+      return /\b(red|coral|crimson|burgundy|wine|cherry|ruby|maroon|terracotta|rust)\b/i.test(fullColorText) ||
+             ['#d67474', '#f87171', '#9f1239', '#fca5a5', '#dc2626', '#b91c1c'].includes(hex);
+
+    case 'sage':
+    case 'green':
+      return /\b(green|sage|olive|emerald|matcha|mint|forest|pistachio|lime|jade)\b/i.test(fullColorText) ||
+             ['#d5e5da', '#88c9a1', '#86efac', '#065f46', '#16a34a', '#15803d'].includes(hex);
+
+    case 'lavender':
+    case 'purple':
+      return /\b(purple|lavender|violet|lilac|plum|mauve|magenta|grape|periwinkle)\b/i.test(fullColorText) ||
+             ['#e9d5ff', '#9a8ecb', '#c084fc', '#6b21a8', '#9333ea', '#7e22ce'].includes(hex);
+
+    case 'pink':
+      return /\b(pink|blush|rose|fuchsia|bubblegum|salmon|peach)\b/i.test(fullColorText) ||
+             ['#fce7f3', '#f472b6', '#fbcfe8', '#9d174d', '#ec4899', '#db2777'].includes(hex);
+
+    case 'dark':
+    case 'black':
+      return /\b(black|charcoal|obsidian|midnight|espresso|graphite|ebony|onyx)\b/i.test(fullColorText) ||
+             ['#000000', '#18181b', '#363749', '#111827', '#1e293b', '#0f172a', '#334155'].includes(hex);
+
+    default:
+      return false;
+  }
+}
+
 interface ClosetViewProps {
   wardrobe: GarmentItem[];
   onToggleFavorite: (itemId: string) => void;
@@ -137,23 +189,10 @@ export const ClosetView: React.FC<ClosetViewProps> = ({
       if (selectedOccasion !== 'all' && !item.occasions.includes(selectedOccasion)) {
         return false;
       }
-      // Color Story palette filter (e.g. Yellow, Blue, Pink, Coral, Lavender)
+      // Color Story palette filter (e.g. Yellow, Blue, Pink, Coral, Lavender, Cream, Dark)
       if (selectedColorStory) {
-        const story = COLOR_STORIES.find(cs => cs.id === selectedColorStory);
-        if (story) {
-          const haystack = `${item.name} ${item.colorName} ${item.category} ${item.subcategory} ${(item.tags || []).join(' ')} ${item.material || ''} ${item.colorTone}`.toLowerCase();
-          const matchesKeyword = story.matchKeywords.some(kw => haystack.includes(kw));
-
-          // Also check hex similarity or hue matching
-          const hex = item.colorHex.toLowerCase();
-          let matchesHex = false;
-          if (selectedColorStory === 'yellow' && (hex.includes('fe') || hex.includes('fa') || hex.includes('fd') || hex.includes('e3') || hex.includes('yellow') || hex.includes('f5e'))) {
-            matchesHex = true;
-          }
-
-          if (!matchesKeyword && !matchesHex) {
-            return false;
-          }
+        if (!matchesColorStory(item, selectedColorStory)) {
+          return false;
         }
       }
       // Search filter
