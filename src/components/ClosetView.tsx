@@ -231,7 +231,7 @@ export const ClosetView: React.FC<ClosetViewProps> = ({
               Your Digital Wardrobe
             </h1>
             <p className="text-xs sm:text-sm text-pastel-muted mt-2 leading-relaxed">
-              Organized by silhouette, seasonal suitability, and color theory harmony. Browse your pieces or let the AI stylist compose your next outfit.
+              Like your stylish bestie who always finalizes the fit—color-curated, season-ready, and AI-styled in seconds.
             </p>
           </div>
 
