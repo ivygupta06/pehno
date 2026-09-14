@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Sparkles, RotateCw, Heart } from 'lucide-react';
+import { Sparkles, RotateCw, Heart, ShoppingBag, ExternalLink, AlertCircle, CheckCircle } from 'lucide-react';
 import { GarmentItem, Outfit, StyleAesthetic } from '../types/wardrobe';
 import { INITIAL_WARDROBE } from '../data/initialWardrobe';
 import { evaluateColorHarmony } from '../lib/colorTheory';
@@ -18,6 +18,15 @@ export interface WheelSegment {
   colorHex: string;
   darkText?: boolean;
   matchingKeywords: string[];
+}
+
+export interface ColorShoppingOption {
+  category: string;
+  name: string;
+  colorName: string;
+  colorHex: string;
+  reasoning: string;
+  searchQuery: string;
 }
 
 export const WHEEL_SEGMENTS: WheelSegment[] = [
@@ -79,6 +88,217 @@ export const WHEEL_SEGMENTS: WheelSegment[] = [
   },
 ];
 
+export const COLOR_SHOPPING_RECOMMENDATIONS: Record<string, ColorShoppingOption[]> = {
+  Purple: [
+    {
+      category: 'Tops',
+      name: 'Lavender Fine-Knit Top',
+      colorName: 'Pastel Lilac',
+      colorHex: '#C084FC',
+      reasoning: 'Soft pastel lavender ribbed knit top for an effortless, gentle pop of color.',
+      searchQuery: 'Lavender Fine Knit Top women',
+    },
+    {
+      category: 'Bottoms',
+      name: 'Plum Tailored Trousers',
+      colorName: 'Deep Mulberry',
+      colorHex: '#7E22CE',
+      reasoning: 'Rich mulberry wide-leg trousers that elevate simple white or cream tops.',
+      searchQuery: 'Plum Tailored Trousers women',
+    },
+    {
+      category: 'Bags',
+      name: 'Lilac Shoulder Bag',
+      colorName: 'Soft Lilac',
+      colorHex: '#E9D5FF',
+      reasoning: 'Compact lilac baguette bag to add a subtle tonal highlight to any outfit.',
+      searchQuery: 'Lilac Leather Shoulder Bag',
+    },
+  ],
+  Yellow: [
+    {
+      category: 'Tops',
+      name: 'Buttercream Knit Top',
+      colorName: 'Soft Butter Yellow',
+      colorHex: '#FEF08A',
+      reasoning: 'Warm buttercream yellow rib top for a soft, radiant sunshine feel.',
+      searchQuery: 'Buttercream Yellow Knit Top',
+    },
+    {
+      category: 'Bottoms',
+      name: 'Honey Mustard Midi Skirt',
+      colorName: 'Honey Mustard',
+      colorHex: '#CA8A04',
+      reasoning: 'Rich honey pleated skirt for warm tonal depth with blue or white tops.',
+      searchQuery: 'Honey Mustard Midi Skirt',
+    },
+    {
+      category: 'Accessories',
+      name: 'Lemon Leather Shoulder Tote',
+      colorName: 'Lemon Yellow',
+      colorHex: '#FACC15',
+      reasoning: 'Vibrant lemon yellow shoulder tote for an energetic accent.',
+      searchQuery: 'Lemon Yellow Leather Shoulder Tote',
+    },
+  ],
+  Green: [
+    {
+      category: 'Outerwear',
+      name: 'Sage Ribbed Cardigan',
+      colorName: 'Soft Sage Green',
+      colorHex: '#86EFAC',
+      reasoning: 'Tranquil sage green cardigan with soft drape for easy layering.',
+      searchQuery: 'Sage Green Ribbed Cardigan',
+    },
+    {
+      category: 'Bottoms',
+      name: 'Olive Wide-Leg Trousers',
+      colorName: 'Deep Olive',
+      colorHex: '#3F6212',
+      reasoning: 'Tailored olive trousers providing high-contrast earthiness.',
+      searchQuery: 'Olive Wide Leg Trousers',
+    },
+    {
+      category: 'Dresses',
+      name: 'Emerald Silk Slip Dress',
+      colorName: 'Lustrous Emerald',
+      colorHex: '#059669',
+      reasoning: 'Rich emerald green satin slip dress for evening radiance.',
+      searchQuery: 'Emerald Green Silk Slip Dress',
+    },
+  ],
+  Blue: [
+    {
+      category: 'Outerwear',
+      name: 'Vintage Washed Denim Jacket',
+      colorName: 'Washer Indigo Blue',
+      colorHex: '#60A5FA',
+      reasoning: 'Timeless light wash denim jacket to anchor casual streetwear.',
+      searchQuery: 'Vintage Light Wash Denim Jacket',
+    },
+    {
+      category: 'Tops',
+      name: 'Cobalt Blue Crop Top',
+      colorName: 'Electric Cobalt',
+      colorHex: '#2563EB',
+      reasoning: 'High-contrast cobalt top that pops against neutrals and black.',
+      searchQuery: 'Cobalt Blue Crop Top',
+    },
+    {
+      category: 'Bags',
+      name: 'Navy Leather Shoulder Bag',
+      colorName: 'Deep Navy',
+      colorHex: '#1E3A8A',
+      reasoning: 'Classic navy leather handbag for sophisticated structure.',
+      searchQuery: 'Navy Leather Shoulder Bag',
+    },
+  ],
+  Pink: [
+    {
+      category: 'Tops',
+      name: 'Blush Satin Camisole',
+      colorName: 'Dusty Rose Pink',
+      colorHex: '#F472B6',
+      reasoning: 'Soft dusty pink satin top for romantic, graceful layering.',
+      searchQuery: 'Blush Satin Camisole Top',
+    },
+    {
+      category: 'Bottoms',
+      name: 'Magenta Pleated Midi Skirt',
+      colorName: 'Vibrant Magenta',
+      colorHex: '#BE185D',
+      reasoning: 'Playful deep pink midi skirt with fluid movement.',
+      searchQuery: 'Magenta Pleated Midi Skirt',
+    },
+    {
+      category: 'Shoes',
+      name: 'Powder Pink Kitten Mules',
+      colorName: 'Powder Pink',
+      colorHex: '#FBCFE8',
+      reasoning: 'Soft powder pink mules for chic pastel finishing touches.',
+      searchQuery: 'Powder Pink Kitten Heel Mules',
+    },
+  ],
+  Beige: [
+    {
+      category: 'Tops',
+      name: 'Oatmeal Oversized Knit',
+      colorName: 'Warm Oatmeal',
+      colorHex: '#E5E7EB',
+      reasoning: 'Cozy oat-toned soft knit for quiet luxury minimalism.',
+      searchQuery: 'Oatmeal Oversized Knit Sweater',
+    },
+    {
+      category: 'Outerwear',
+      name: 'Camel Longline Trench',
+      colorName: 'Golden Camel',
+      colorHex: '#D97706',
+      reasoning: 'Iconic camel trench coat bringing instant elegance to any outfit.',
+      searchQuery: 'Camel Wool Trench Coat women',
+    },
+    {
+      category: 'Bags',
+      name: 'Taupe Leather Crossbody',
+      colorName: 'Warm Taupe',
+      colorHex: '#9CA3AF',
+      reasoning: 'Versatile neutral taupe crossbody bag for everyday wear.',
+      searchQuery: 'Taupe Leather Crossbody Bag',
+    },
+  ],
+  Red: [
+    {
+      category: 'Tops',
+      name: 'Crimson Silk Blouse',
+      colorName: 'Scarlet Crimson',
+      colorHex: '#EF4444',
+      reasoning: 'Vibrant crimson red silk blouse to command any room.',
+      searchQuery: 'Crimson Red Silk Blouse',
+    },
+    {
+      category: 'Outerwear',
+      name: 'Burgundy Cropped Jacket',
+      colorName: 'Deep Wine Burgundy',
+      colorHex: '#881337',
+      reasoning: 'Sophisticated deep wine burgundy cropped jacket.',
+      searchQuery: 'Burgundy Leather Cropped Jacket',
+    },
+    {
+      category: 'Shoes',
+      name: 'Ruby Slingback Heels',
+      colorName: 'Ruby Red',
+      colorHex: '#DC2626',
+      reasoning: 'Statement ruby red slingback heels for evening outfits.',
+      searchQuery: 'Ruby Red Slingback Heels',
+    },
+  ],
+  Orange: [
+    {
+      category: 'Tops',
+      name: 'Terracotta Linen Shirt',
+      colorName: 'Earthy Terracotta',
+      colorHex: '#EA580C',
+      reasoning: 'Warm terracotta linen shirt for breezy, organic warmth.',
+      searchQuery: 'Terracotta Linen Shirt women',
+    },
+    {
+      category: 'Bottoms',
+      name: 'Rust Pleated Skirt',
+      colorName: 'Burnt Rust',
+      colorHex: '#C2410C',
+      reasoning: 'Deep burnt orange rust pleated skirt with rich movement.',
+      searchQuery: 'Rust Burnt Orange Pleated Skirt',
+    },
+    {
+      category: 'Bags',
+      name: 'Peach Woven Straw Tote',
+      colorName: 'Soft Peach',
+      colorHex: '#FDBA74',
+      reasoning: 'Warm peach woven tote bag for relaxed summer outings.',
+      searchQuery: 'Peach Woven Straw Tote Bag',
+    },
+  ],
+};
+
 export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
   wardrobe,
   favorites,
@@ -91,6 +311,7 @@ export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
   const [selectedSegment, setSelectedSegment] = useState<WheelSegment | null>(null);
   const [matchingItems, setMatchingItems] = useState<GarmentItem[]>([]);
   const [generatedOutfit, setGeneratedOutfit] = useState<Outfit | null>(null);
+  const [shoppingOptions, setShoppingOptions] = useState<ColorShoppingOption[]>([]);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const currentRotationRef = useRef(0);
@@ -128,6 +349,7 @@ export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
     setIsSpinning(true);
     setSelectedSegment(null);
     setGeneratedOutfit(null);
+    setShoppingOptions([]);
     setSavedSuccess(false);
 
     // Choose random slice (0 to 7)
@@ -176,7 +398,7 @@ export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
     }, 4000);
   };
 
-  // Find wardrobe items matching the color and build an outfit
+  // Find wardrobe items matching the color and build an outfit or generate shopping options
   const composeColorOutfit = (segment: WheelSegment) => {
     const activeWardrobe = wardrobe.length > 0 ? wardrobe : INITIAL_WARDROBE;
 
@@ -192,86 +414,85 @@ export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
     });
 
     setMatchingItems(matches);
+    setShoppingOptions(COLOR_SHOPPING_RECOMMENDATIONS[segment.name] || []);
 
-    // Compose an outfit
-    // 1. Pick a primary hero garment in the selected color
-    let heroGarment = matches[0];
-    if (!heroGarment) {
-      // If no exact item, pick a random item from wardrobe to anchor
-      heroGarment = activeWardrobe[Math.floor(Math.random() * activeWardrobe.length)];
-    }
+    // IF user HAS garments in this color in their closet:
+    if (matches.length > 0) {
+      const heroGarment = matches[0];
 
-    let top: GarmentItem | undefined;
-    let bottom: GarmentItem | undefined;
-    let dress: GarmentItem | undefined;
-    let outerwear: GarmentItem | undefined;
-    let shoes: GarmentItem | undefined;
-    let bag: GarmentItem | undefined;
+      let top: GarmentItem | undefined;
+      let bottom: GarmentItem | undefined;
+      let dress: GarmentItem | undefined;
+      let outerwear: GarmentItem | undefined;
+      let shoes: GarmentItem | undefined;
+      let bag: GarmentItem | undefined;
 
-    if (heroGarment.category === 'dresses') {
-      dress = heroGarment;
-    } else if (heroGarment.category === 'tops') {
-      top = heroGarment;
-    } else if (heroGarment.category === 'bottoms') {
-      bottom = heroGarment;
-    } else if (heroGarment.category === 'outerwear') {
-      outerwear = heroGarment;
-    } else if (heroGarment.category === 'shoes') {
-      shoes = heroGarment;
-    } else if (heroGarment.category === 'bags') {
-      bag = heroGarment;
-    }
-
-    // Fill in complementary pieces
-    if (!dress) {
-      if (!top) {
-        top = activeWardrobe.find((i) => i.category === 'tops');
+      if (heroGarment.category === 'dresses') {
+        dress = heroGarment;
+      } else if (heroGarment.category === 'tops') {
+        top = heroGarment;
+      } else if (heroGarment.category === 'bottoms') {
+        bottom = heroGarment;
+      } else if (heroGarment.category === 'outerwear') {
+        outerwear = heroGarment;
+      } else if (heroGarment.category === 'shoes') {
+        shoes = heroGarment;
+      } else if (heroGarment.category === 'bags') {
+        bag = heroGarment;
       }
-      if (!bottom) {
-        bottom = activeWardrobe.find((i) => i.category === 'bottoms');
+
+      // Fill in complementary pieces
+      if (!dress) {
+        if (!top) {
+          top = activeWardrobe.find((i) => i.category === 'tops');
+        }
+        if (!bottom) {
+          bottom = activeWardrobe.find((i) => i.category === 'bottoms');
+        }
       }
+
+      if (!shoes) {
+        shoes = activeWardrobe.find((i) => i.category === 'shoes');
+      }
+      if (!bag) {
+        bag = activeWardrobe.find((i) => i.category === 'bags');
+      }
+      if (!outerwear && Math.random() > 0.5) {
+        outerwear = activeWardrobe.find((i) => i.category === 'outerwear');
+      }
+
+      const items = [top, bottom, dress, outerwear, shoes, bag].filter((i): i is GarmentItem => Boolean(i));
+      const harmony = evaluateColorHarmony(
+        items.map((i) => ({ hex: i.colorHex || '#FFFFFF', name: i.colorName || 'Neutral' }))
+      );
+
+      const newOutfit: Outfit = {
+        id: `spin-outfit-${Date.now()}`,
+        title: `${segment.name} Closet Statement`,
+        description: `Custom outfit built around your real ${segment.name} piece from your closet!`,
+        vibe: (heroGarment.aesthetics?.[0] as StyleAesthetic) || 'casual',
+        occasion: 'casual',
+        colorHarmonyType: harmony.harmonyType,
+        compatibilityScore: Math.max(90, harmony.score),
+        top,
+        bottom,
+        dress,
+        outerwear,
+        shoes,
+        bag,
+        stylingNotes: [
+          `Curated around your real ${segment.name} item (${heroGarment.name}) in your closet!`,
+          harmony.description,
+          `Pairing ${segment.name} tones creates an intentional, elevated visual focal point.`,
+        ],
+        createdAt: Date.now(),
+      };
+
+      setGeneratedOutfit(newOutfit);
+    } else {
+      // IF user DOES NOT HAVE garments in this color in their closet:
+      setGeneratedOutfit(null);
     }
-
-    if (!shoes) {
-      shoes = activeWardrobe.find((i) => i.category === 'shoes');
-    }
-    if (!bag) {
-      bag = activeWardrobe.find((i) => i.category === 'bags');
-    }
-    if (!outerwear && Math.random() > 0.5) {
-      outerwear = activeWardrobe.find((i) => i.category === 'outerwear');
-    }
-
-    const items = [top, bottom, dress, outerwear, shoes, bag].filter((i): i is GarmentItem => Boolean(i));
-    const harmony = evaluateColorHarmony(items.map((i) => ({ hex: i.colorHex || '#FFFFFF', name: i.colorName || 'Neutral' })));
-
-    const outfitTitle = matches.length > 0
-      ? `${segment.name} Palette Statement`
-      : `${segment.name} Accent Harmony`;
-
-    const newOutfit: Outfit = {
-      id: `spin-outfit-${Date.now()}`,
-      title: outfitTitle,
-      description: `Custom outfit curated around your ${segment.name} color spin!`,
-      vibe: (heroGarment.aesthetics?.[0] as StyleAesthetic) || 'casual',
-      occasion: 'casual',
-      colorHarmonyType: harmony.harmonyType,
-      compatibilityScore: Math.max(88, harmony.score),
-      top,
-      bottom,
-      dress,
-      outerwear,
-      shoes,
-      bag,
-      stylingNotes: [
-        `Curated specifically around your ${segment.name} wheel spin!`,
-        harmony.description,
-        `Pairing ${segment.name} tones creates an intentional, elevated visual focus.`,
-      ],
-      createdAt: Date.now(),
-    };
-
-    setGeneratedOutfit(newOutfit);
   };
 
   const isFavorite = generatedOutfit
@@ -426,8 +647,8 @@ export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
         </div>
       </div>
 
-      {/* Generated Outfit Result Card */}
-      {selectedSegment && !isSpinning && generatedOutfit && (
+      {/* Case 1: USER HAS ITEMS IN THIS COLOR IN THEIR CLOSET */}
+      {selectedSegment && !isSpinning && generatedOutfit && matchingItems.length > 0 && (
         <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-pastel-sand/70 shadow-card space-y-6 animate-slide-up bg-white">
           
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-pastel-sand/40 pb-5">
@@ -438,10 +659,11 @@ export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
                   style={{ backgroundColor: selectedSegment.colorHex }}
                 />
                 <span className="text-xs font-bold uppercase tracking-wider text-pastel-muted">
-                  {selectedSegment.name} Theme Outfit
+                  {selectedSegment.name} Closet Outfit
                 </span>
-                <span className="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2 py-0.5 rounded-full">
-                  {generatedOutfit.compatibilityScore}% Match
+                <span className="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" />
+                  <span>{generatedOutfit.compatibilityScore}% Match</span>
                 </span>
               </div>
               <h3 className="font-serif text-2xl font-bold text-pastel-charcoal">
@@ -554,11 +776,77 @@ export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
         </div>
       )}
 
-      {/* Available Wardrobe Matches Preview */}
+      {/* Case 2: NO ITEMS OF THIS COLOR IN CLOSET -> SHOW NOTICE + BUYING OPTIONS */}
+      {selectedSegment && !isSpinning && matchingItems.length === 0 && (
+        <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-amber-200 shadow-card space-y-6 bg-gradient-to-br from-amber-50/70 via-white to-amber-50/30 animate-slide-up">
+          
+          <div className="flex items-start gap-3 bg-amber-100/70 border border-amber-300/60 p-4 rounded-2xl">
+            <AlertCircle className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-sm font-bold text-amber-900">
+                No {selectedSegment.name} items currently in your closet!
+              </h4>
+              <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">
+                You don't have any {selectedSegment.name.toLowerCase()} pieces in your wardrobe right now. Here are curated shopping suggestions to add {selectedSegment.name} options to your collection:
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-serif text-xl font-bold text-pastel-charcoal mb-4 flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5 text-amber-600" />
+              <span>Recommended {selectedSegment.name} Buying Options</span>
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {shoppingOptions.map((opt, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white rounded-2xl p-4 border border-pastel-sand/60 shadow-soft hover:shadow-card transition-all flex flex-col justify-between space-y-3"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-pastel-cream-200 text-pastel-charcoal">
+                        {opt.category}
+                      </span>
+                      <span
+                        className="w-4 h-4 rounded-full border border-black/15 shadow-xs"
+                        style={{ backgroundColor: opt.colorHex }}
+                        title={opt.colorName}
+                      />
+                    </div>
+
+                    <h5 className="font-serif text-base font-bold text-pastel-charcoal">
+                      {opt.name}
+                    </h5>
+
+                    <p className="text-xs text-pastel-muted leading-relaxed">
+                      {opt.reasoning}
+                    </p>
+                  </div>
+
+                  <a
+                    href={`https://www.google.com/search?tbm=shop&q=${encodeURIComponent(opt.searchQuery)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5" />
+                    <span>Find & Shop</span>
+                    <ExternalLink className="w-3 h-3 opacity-80" />
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Available Wardrobe Matches Preview (If user HAS items in this color) */}
       {selectedSegment && !isSpinning && matchingItems.length > 0 && (
         <div className="glass-panel rounded-3xl p-6 border border-pastel-sand/50 shadow-soft bg-white/70">
           <h4 className="font-serif text-lg font-bold text-pastel-charcoal mb-3">
-            Your {selectedSegment.name} Pieces ({matchingItems.length})
+            Your {selectedSegment.name} Closet Pieces ({matchingItems.length})
           </h4>
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
             {matchingItems.map((item) => (
@@ -573,6 +861,49 @@ export const ColorWheelView: React.FC<ColorWheelViewProps> = ({
                 />
                 <p className="text-xs font-bold text-pastel-charcoal truncate">{item.name}</p>
                 <p className="text-[10px] text-pastel-muted uppercase">{item.subcategory || item.category}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Optional Buying Options (If user ALREADY HAS items, but wants to expand palette) */}
+      {selectedSegment && !isSpinning && matchingItems.length > 0 && shoppingOptions.length > 0 && (
+        <div className="glass-panel rounded-3xl p-6 border border-pastel-sand/50 bg-white/60 space-y-4">
+          <div className="flex items-center justify-between">
+            <h4 className="font-serif text-lg font-bold text-pastel-charcoal flex items-center gap-2">
+              <ShoppingBag className="w-4 h-4 text-amber-600" />
+              <span>Expand Your {selectedSegment.name} Collection</span>
+            </h4>
+            <span className="text-xs text-pastel-muted">Shopping Ideas</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {shoppingOptions.map((opt, idx) => (
+              <div
+                key={idx}
+                className="bg-white rounded-2xl p-3 border border-pastel-sand/40 text-xs flex flex-col justify-between space-y-2"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-pastel-charcoal">{opt.name}</span>
+                    <span
+                      className="w-3 h-3 rounded-full border border-black/10"
+                      style={{ backgroundColor: opt.colorHex }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-pastel-muted line-clamp-2">{opt.reasoning}</p>
+                </div>
+
+                <a
+                  href={`https://www.google.com/search?tbm=shop&q=${encodeURIComponent(opt.searchQuery)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="py-1.5 rounded-xl bg-pastel-cream-200 hover:bg-amber-100 text-pastel-charcoal text-[11px] font-bold transition-all flex items-center justify-center gap-1"
+                >
+                  <span>Shop Item</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
               </div>
             ))}
           </div>
