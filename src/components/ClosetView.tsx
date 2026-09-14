@@ -1,6 +1,82 @@
 import React, { useState, useMemo } from 'react';
-import { Search, SlidersHorizontal, Heart, Sparkles, Plus, Eye, Layers } from 'lucide-react';
+import { Search, SlidersHorizontal, Heart, Sparkles, Plus, Eye, Layers, ExternalLink, X } from 'lucide-react';
 import { GarmentCategory, GarmentItem, ColorTone, Season, Occasion } from '../types/wardrobe';
+
+export interface ColorStoryOption {
+  id: string;
+  name: string;
+  hex: string;
+  bgTint: string;
+  borderHex: string;
+  matchKeywords: string[];
+}
+
+const COLOR_STORIES: ColorStoryOption[] = [
+  {
+    id: 'cream',
+    name: 'Cream & Beige',
+    hex: '#F7F3E9',
+    bgTint: 'rgba(247, 243, 233, 0.7)',
+    borderHex: '#E5D5C5',
+    matchKeywords: ['cream', 'beige', 'oat', 'linen', 'ecru', 'tan', 'sand', 'camel', 'khaki', 'taupe', 'nude', 'ivory', 'biscuit', 'warm white'],
+  },
+  {
+    id: 'blue',
+    name: 'Soft Blue & Denim',
+    hex: '#7EA6E0',
+    bgTint: 'rgba(239, 246, 255, 0.85)',
+    borderHex: '#93C5FD',
+    matchKeywords: ['blue', 'denim', 'navy', 'sky', 'baby blue', 'cobalt', 'indigo', 'azure', 'cyan', 'slate', 'ocean', 'teal', 'aqua'],
+  },
+  {
+    id: 'coral',
+    name: 'Coral & Red',
+    hex: '#D67474',
+    bgTint: 'rgba(254, 242, 242, 0.85)',
+    borderHex: '#FCA5A5',
+    matchKeywords: ['red', 'coral', 'crimson', 'burgundy', 'wine', 'cherry', 'ruby', 'maroon', 'rose', 'terracotta', 'rust', 'brick'],
+  },
+  {
+    id: 'sage',
+    name: 'Sage & Green',
+    hex: '#88C9A1',
+    bgTint: 'rgba(240, 253, 244, 0.85)',
+    borderHex: '#86EFAC',
+    matchKeywords: ['green', 'sage', 'olive', 'emerald', 'matcha', 'mint', 'forest', 'pistachio', 'khaki green', 'lime', 'jade'],
+  },
+  {
+    id: 'lavender',
+    name: 'Lavender & Purple',
+    hex: '#9A8ECB',
+    bgTint: 'rgba(250, 245, 255, 0.85)',
+    borderHex: '#C084FC',
+    matchKeywords: ['purple', 'lavender', 'violet', 'lilac', 'plum', 'mauve', 'magenta', 'grape', 'amethyst', 'periwinkle'],
+  },
+  {
+    id: 'dark',
+    name: 'Slate & Black',
+    hex: '#363749',
+    bgTint: 'rgba(241, 245, 249, 0.85)',
+    borderHex: '#475569',
+    matchKeywords: ['black', 'charcoal', 'slate', 'dark', 'obsidian', 'midnight', 'espresso', 'graphite', 'ebony', 'onyx'],
+  },
+  {
+    id: 'yellow',
+    name: 'Sunlit Yellow & Gold',
+    hex: '#FACC15',
+    bgTint: 'rgba(254, 252, 232, 0.95)',
+    borderHex: '#FDE047',
+    matchKeywords: ['yellow', 'gold', 'amber', 'butter', 'mustard', 'lemon', 'honey', 'canary', 'maize', 'marigold', 'blonde', 'sunflower'],
+  },
+  {
+    id: 'pink',
+    name: 'Blush & Pink',
+    hex: '#F472B6',
+    bgTint: 'rgba(253, 242, 248, 0.85)',
+    borderHex: '#FBCFE8',
+    matchKeywords: ['pink', 'blush', 'rose', 'fuchsia', 'bubblegum', 'salmon', 'peach', 'barbie'],
+  },
+];
 
 interface ClosetViewProps {
   wardrobe: GarmentItem[];
@@ -34,8 +110,13 @@ export const ClosetView: React.FC<ClosetViewProps> = ({
   const [selectedTone, setSelectedTone] = useState<ColorTone | 'all'>('all');
   const [selectedSeason, setSelectedSeason] = useState<Season | 'all'>('all');
   const [selectedOccasion, setSelectedOccasion] = useState<Occasion | 'all'>('all');
+  const [selectedColorStory, setSelectedColorStory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+
+  const activeColorStory = useMemo(() => {
+    return COLOR_STORIES.find(cs => cs.id === selectedColorStory) || null;
+  }, [selectedColorStory]);
 
   // Filtered garments
   const filteredItems = useMemo(() => {
@@ -56,6 +137,25 @@ export const ClosetView: React.FC<ClosetViewProps> = ({
       if (selectedOccasion !== 'all' && !item.occasions.includes(selectedOccasion)) {
         return false;
       }
+      // Color Story palette filter (e.g. Yellow, Blue, Pink, Coral, Lavender)
+      if (selectedColorStory) {
+        const story = COLOR_STORIES.find(cs => cs.id === selectedColorStory);
+        if (story) {
+          const haystack = `${item.name} ${item.colorName} ${item.category} ${item.subcategory} ${(item.tags || []).join(' ')} ${item.material || ''} ${item.colorTone}`.toLowerCase();
+          const matchesKeyword = story.matchKeywords.some(kw => haystack.includes(kw));
+
+          // Also check hex similarity or hue matching
+          const hex = item.colorHex.toLowerCase();
+          let matchesHex = false;
+          if (selectedColorStory === 'yellow' && (hex.includes('fe') || hex.includes('fa') || hex.includes('fd') || hex.includes('e3') || hex.includes('yellow') || hex.includes('f5e'))) {
+            matchesHex = true;
+          }
+
+          if (!matchesKeyword && !matchesHex) {
+            return false;
+          }
+        }
+      }
       // Search filter
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -70,7 +170,7 @@ export const ClosetView: React.FC<ClosetViewProps> = ({
       }
       return true;
     });
-  }, [wardrobe, selectedCategory, selectedTone, selectedSeason, selectedOccasion, searchQuery]);
+  }, [wardrobe, selectedCategory, selectedTone, selectedSeason, selectedOccasion, selectedColorStory, searchQuery]);
 
   // Wardrobe palette distribution
   const paletteBreakdown = useMemo(() => {
@@ -82,7 +182,12 @@ export const ClosetView: React.FC<ClosetViewProps> = ({
   }, [wardrobe]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
+    <div 
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn transition-colors duration-500 rounded-3xl"
+      style={{
+        backgroundColor: activeColorStory ? activeColorStory.bgTint : undefined,
+      }}
+    >
       
       {/* Top Banner / Closet Aesthetic Overview */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-pastel-butter-light via-pastel-cream-100 to-pastel-sage-light p-6 sm:p-8 border border-pastel-sand/60 shadow-soft">
@@ -99,7 +204,7 @@ export const ClosetView: React.FC<ClosetViewProps> = ({
             </p>
           </div>
 
-          {/* Quick Metrics */}
+          {/* Quick Metrics & Actions */}
           <div className="flex items-center gap-4 flex-wrap">
             <div className="px-4 py-3 rounded-2xl bg-white/80 backdrop-blur-sm border border-pastel-sand shadow-soft flex flex-col">
               <span className="text-[10px] uppercase font-bold tracking-wider text-pastel-muted">Total Pieces</span>
@@ -126,11 +231,49 @@ export const ClosetView: React.FC<ClosetViewProps> = ({
 
             <button
               onClick={onOpenUpload}
-              className="px-5 py-3.5 rounded-2xl bg-pastel-sage-dark hover:bg-pastel-sage-dark/90 text-white font-bold text-xs flex items-center gap-2 shadow-soft hover:shadow-soft-lg hover:scale-102 transition-all"
+              className="px-5 py-3.5 rounded-2xl bg-pastel-sage-dark hover:bg-pastel-sage-dark/90 text-white font-bold text-xs flex items-center gap-2 shadow-soft hover:shadow-soft-lg hover:scale-102 transition-all flex-shrink-0"
             >
               <Plus className="w-4 h-4" />
               <span>Add Pieces</span>
             </button>
+
+            {/* YOUR COLOR STORY PALETTE (BESIDE ADD PIECES BUTTON) */}
+            <div className="px-4 py-2 rounded-2xl bg-white/90 backdrop-blur-sm border border-pastel-sand shadow-soft flex flex-col gap-1 transition-all">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[11px] font-bold text-pastel-charcoal/80 tracking-wide">
+                  Your color story
+                </span>
+                {selectedColorStory && (
+                  <button
+                    onClick={() => setSelectedColorStory(null)}
+                    className="text-[10px] font-bold text-rose-600 hover:underline flex items-center gap-0.5"
+                  >
+                    <X className="w-3 h-3" />
+                    <span>Reset</span>
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                {COLOR_STORIES.map(cs => {
+                  const isActive = selectedColorStory === cs.id;
+                  return (
+                    <button
+                      key={cs.id}
+                      onClick={() => setSelectedColorStory(isActive ? null : cs.id)}
+                      title={`Filter ${cs.name} fits, shoes & bags`}
+                      className={`relative w-7 h-7 rounded-full border-2 transition-all transform hover:scale-110 shadow-xs flex items-center justify-center ${
+                        isActive
+                          ? 'scale-110 ring-2 ring-offset-2 ring-pastel-charcoal shadow-md z-10'
+                          : 'border-white hover:shadow-soft'
+                      }`}
+                      style={{ backgroundColor: cs.hex, borderColor: isActive ? cs.borderHex : '#FFFFFF' }}
+                    >
+                      {isActive && <span className="w-2 h-2 rounded-full bg-pastel-charcoal shadow-xs" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -265,24 +408,100 @@ export const ClosetView: React.FC<ClosetViewProps> = ({
         </div>
       </div>
 
-      {/* Wardrobe Grid */}
-      {filteredItems.length === 0 ? (
-        <div className="text-center py-16 bg-white/60 rounded-3xl border border-dashed border-pastel-sand p-8">
-          <p className="font-serif text-xl font-bold text-pastel-charcoal mb-2">No garments found</p>
-          <p className="text-xs text-pastel-muted mb-4">Try clearing filters or search query.</p>
+      {/* Active Color Story Banner */}
+      {activeColorStory && (
+        <div className="p-4 rounded-2xl bg-white/95 backdrop-blur-sm border border-pastel-sand shadow-soft flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <span className="w-7 h-7 rounded-full border border-black/10 shadow-xs flex-shrink-0 flex items-center justify-center font-bold text-xs" style={{ backgroundColor: activeColorStory.hex }}>
+              ✨
+            </span>
+            <div>
+              <span className="text-xs font-bold text-pastel-charcoal">
+                Active Color Story: <strong className="capitalize text-pastel-sage-dark">{activeColorStory.name}</strong>
+              </span>
+              <p className="text-[11px] text-pastel-muted">
+                Displaying all matching fits, shoes, bags & accessories ({filteredItems.length} items found)
+              </p>
+            </div>
+          </div>
+
           <button
-            onClick={() => {
-              setSelectedCategory('all');
-              setSelectedTone('all');
-              setSelectedSeason('all');
-              setSelectedOccasion('all');
-              setSearchQuery('');
-            }}
-            className="px-4 py-2 rounded-full bg-pastel-sage text-pastel-sage-dark text-xs font-bold"
+            onClick={() => setSelectedColorStory(null)}
+            className="px-3.5 py-1.5 rounded-full bg-pastel-cream-200 hover:bg-pastel-cream-300 text-pastel-charcoal text-xs font-bold transition-all whitespace-nowrap self-start sm:self-auto"
           >
-            Reset Filters
+            Clear Color Filter
           </button>
         </div>
+      )}
+
+      {/* Wardrobe Grid & Empty Color Recommendations */}
+      {filteredItems.length === 0 ? (
+        activeColorStory ? (
+          <div className="text-center py-12 bg-white/90 rounded-3xl border border-pastel-sand p-6 sm:p-8 space-y-5 shadow-soft animate-fadeIn">
+            <div className="w-14 h-14 rounded-full mx-auto flex items-center justify-center border border-black/10 shadow-sm" style={{ backgroundColor: activeColorStory.hex }}>
+              <Sparkles className="w-7 h-7 text-pastel-charcoal" />
+            </div>
+            <div className="max-w-md mx-auto">
+              <h3 className="font-serif text-2xl font-bold text-pastel-charcoal">
+                No {activeColorStory.name} pieces currently in your closet!
+              </h3>
+              <p className="text-xs text-pastel-muted mt-1.5 leading-relaxed">
+                Pehno can help you complete your color story! Explore shopping recommendations for {activeColorStory.name.toLowerCase()} tops, dresses, shoes, and bags below:
+              </p>
+            </div>
+
+            {/* Buying Options Cards for missing color story */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-4xl mx-auto pt-2">
+              {[
+                { cat: 'Tops', name: `${activeColorStory.name.split(' ')[0]} Linen Top`, query: `${activeColorStory.name.split(' ')[0]} women linen top aesthetic` },
+                { cat: 'Dresses', name: `${activeColorStory.name.split(' ')[0]} Satin Dress`, query: `${activeColorStory.name.split(' ')[0]} satin dress evening` },
+                { cat: 'Shoes', name: `${activeColorStory.name.split(' ')[0]} Heel Mules`, query: `${activeColorStory.name.split(' ')[0]} heels mules shoes` },
+                { cat: 'Bags', name: `${activeColorStory.name.split(' ')[0]} Leather Tote`, query: `${activeColorStory.name.split(' ')[0]} shoulder tote bag` },
+              ].map((sugg, sIdx) => (
+                <div key={sIdx} className="p-3.5 rounded-2xl bg-pastel-cream-100/90 border border-pastel-sand text-left flex items-center justify-between gap-2 shadow-xs">
+                  <div>
+                    <span className="text-[9px] uppercase font-bold text-pastel-muted block">{sugg.cat}</span>
+                    <p className="text-xs font-bold text-pastel-charcoal">{sugg.name}</p>
+                  </div>
+                  <a
+                    href={`https://www.google.com/search?tbm=shop&q=${encodeURIComponent(sugg.query)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white hover:bg-pastel-cream-200 border border-pastel-sand text-[10px] font-bold text-pastel-charcoal whitespace-nowrap shadow-xs hover:shadow-soft transition-all"
+                  >
+                    <span>Inspo / Shop</span>
+                    <ExternalLink className="w-3 h-3 text-pastel-muted" />
+                  </a>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setSelectedColorStory(null)}
+              className="px-6 py-2.5 rounded-full bg-pastel-charcoal text-white text-xs font-bold shadow-soft hover:scale-102 transition-all mt-2"
+            >
+              Reset Color Filter & View Full Closet
+            </button>
+          </div>
+        ) : (
+          <div className="text-center py-16 bg-white/60 rounded-3xl border border-dashed border-pastel-sand p-8">
+            <p className="font-serif text-xl font-bold text-pastel-charcoal mb-2">No garments found</p>
+            <p className="text-xs text-pastel-muted mb-4">Try clearing filters or search query.</p>
+            <button
+              onClick={() => {
+                setSelectedCategory('all');
+                setSelectedTone('all');
+                setSelectedSeason('all');
+                setSelectedOccasion('all');
+                setSelectedColorStory(null);
+                setSearchQuery('');
+              }}
+              className="px-4 py-2 rounded-full bg-pastel-sage text-pastel-sage-dark text-xs font-bold"
+            >
+              Reset Filters
+            </button>
+          </div>
+        )
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
           {filteredItems.map(item => (
